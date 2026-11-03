@@ -31,6 +31,22 @@
 
 ## Featured projects
 
+### Reflections (2026) — Product | Design Systems, Designer-builder
+Reflections lets a talent decide exactly what a brand may make with their likeness using
+AI, and have it enforced. Every request is checked against the license before anything
+is made, and the talent approves every final.
+
+- Team: Bruno was the only designer, with the two founders and two engineers, shipping
+  daily with AI agents writing most of the code.
+- What Bruno did: wrote the design rules agents build from, built the design system in
+  Figma with AI in two days (146 variables, 47 components), which the engineers wired
+  into the code as the source of truth with a check on every pull request. Then designed
+  in Figma and shipped his own work in code: issuing a license as a conversation, one
+  license page for both sides, revision requests, the talent's home, the library,
+  settings. Designed and built the new homepage (reflections.ai) in three days.
+- Skills: Design Systems, Figma, AI-assisted design, Front-end, Prototyping
+- Case study: https://brunoparadas.com/project.html?project=reflections
+
 ### Smartify (2022) — Product | UX/UI, Mobile
 An arts & culture app that helps people get more out of every museum visit. With
 Smartify, users can listen to onsite tours, buy museum tickets, explore artwork and
@@ -91,6 +107,10 @@ concept, ChildFund donations, music app concept, FC Bagres crest.
 When an image would help an answer, reference it with markdown: `![alt](path)`.
 Use ONLY these paths:
 
+- `images/reflections/walkthrough-poster.jpg` — Reflections homepage hero: "Control what AI makes of you"
+- `images/reflections/ds-colors.png` — Reflections design system in Figma: colour tokens
+- `images/reflections/talent-home.png` — Reflections: the talent's home
+- `images/reflections/brand-license.png` — Reflections: a license as the brand sees it
 - `images/smartify/CZjpj7M4So9ps53GjuFUeDBQ.png` — Smartify app screens: gallery, profile and featured artwork
 - `images/smartify/hsFTnzWovn6e0IddoLrNKFJ8s.png` — Smartify Explore screen, art and culture near you
 - `images/smartify/HhQDAZ2x6mRHGndwt8ZMZjzzFaE.png` — Smartify redesigned onboarding screens

@@ -4,6 +4,119 @@
 
 const PROJECTS = [
   {
+    slug: "reflections",
+    title: "Reflections",
+    tag: "Product | Design Systems",
+    description: "AI licensing for talent and brands. I designed it and shipped it in code.",
+    year: "2026",
+    disciplines: ["Product Design", "Design Systems", "Front-end", "Web Design"],
+    image: "images/reflections/walkthrough-poster.jpg",
+    card: {
+      bg: "#0a0a0a",
+      fg: "#ffffff",
+      logo: "images/reflections/logo.svg",
+      tagline: "Built the design system with AI, then designed and shipped the product in code.",
+      screen: "images/reflections/walkthrough-poster.jpg",
+      tags: ["Product | Design Systems", "Designer-builder"],
+    },
+    intro:
+      "Reflections lets a talent decide exactly what a brand may make with their likeness using AI, " +
+      "and have it enforced.",
+    caseStudy: {
+      intro: [
+        "Reflections lets a talent decide exactly what a brand may make with their likeness using AI, and have it enforced. Every request is checked against the license before anything is made, and the talent approves every final.",
+        "I was the only designer on a team of two founders and two engineers. We shipped every day, with AI agents writing most of the code. My job became designing and building at that speed.",
+      ],
+      hero: {
+        video: {
+          mp4: "images/reflections/walkthrough.mp4",
+          webm: "images/reflections/walkthrough.webm",
+          poster: "images/reflections/walkthrough-poster.jpg",
+        },
+        alt: "A scroll through the Reflections homepage",
+        caption: "The homepage I designed and built",
+      },
+      sections: [
+        {
+          heading: "Keeping up with the code",
+          body: [
+            "Three weeks in, the product was drifting. Nineteen font sizes, two different buttons, screens that each looked fine and didn’t match each other.",
+            "A Figma library and a handoff wouldn’t fix it. The code wasn’t being written by people reading Figma. I needed a design system the agents could read.",
+          ],
+        },
+        {
+          heading: "A design system in days, not months",
+          body: [
+            "I wrote the rules down first: one file with every colour, size and spacing value, and the reason behind each. To test it, I asked an agent to build a sign-in page from that file alone, then fixed what it got wrong.",
+            "Then I built the design system in Figma with AI. Tokens, type styles and 47 components, in two days instead of weeks.",
+            "The engineers wired it into the code. The Figma file is the source of truth, every value is generated from it, and a check on every pull request stops the product from drifting back. Anything new that isn’t in Figma yet gets flagged for me.",
+          ],
+          media: {
+            layout: "full",
+            images: [
+              {
+                src: "images/reflections/ds-colors.png",
+                alt: "The Reflections design system in Figma: colour tokens with a one-line rule each",
+                caption: "The design system in Figma",
+              },
+            ],
+          },
+        },
+        {
+          heading: "Designing and shipping",
+          body: [
+            "With the system in place I stopped handing off. I designed in Figma, built the screens myself with AI, and opened the pull requests. The engineers reviewed, and most of it shipped the same week.",
+            "That’s how the main flows got made: issuing a license as a conversation instead of a form, one license page both sides see, a way for brands to ask for changes, the talent’s home, the library, settings. A dozen pull requests in two months.",
+          ],
+          media: {
+            layout: "stack",
+            images: [
+              {
+                src: "images/reflections/talent-home.png",
+                alt: "Talent Home: what needs you today, and every active license",
+                caption: "The talent’s home",
+              },
+              {
+                src: "images/reflections/brand-license.png",
+                alt: "The same license as the brand sees it",
+                caption: "The same license, on the brand’s side",
+              },
+            ],
+          },
+        },
+        {
+          heading: "The landing page",
+          body: [
+            "I designed the new homepage in Figma and built it in three days, with short films cut from the real product. It went live as reflections.ai the day after it merged.",
+          ],
+          media: {
+            layout: "full",
+            images: [
+              {
+                video: {
+                  mp4: "images/reflections/how-talent.mp4",
+                  webm: "images/reflections/how-talent.webm",
+                  poster: "images/reflections/how-talent-poster.jpg",
+                },
+                alt: "How it works, for talent: create a license, issue it, approve every request",
+                caption: "From the homepage: how it works, for talent",
+              },
+            ],
+          },
+        },
+        {
+          heading: "Final note",
+          body: [
+            "The thing I’m proudest of isn’t a screen. It’s that one designer could keep a product coherent while AI wrote the code, by owning the system everyone builds from.",
+          ],
+        },
+      ],
+      role:
+        "I was the only designer at Reflections, working with the founders and two engineers. I built the design system in Figma with AI, wrote the rules the agents build from, designed the licensing flows, and shipped my own work in code, landing page included.",
+      skills: ["Design Systems", "Figma", "AI-assisted design", "Front-end", "Prototyping"],
+    },
+  },
+  {
     slug: "smartify",
     title: "Smartify",
     tag: "Product | UX/UI",

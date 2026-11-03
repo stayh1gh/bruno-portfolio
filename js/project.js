@@ -14,11 +14,26 @@
       .join("");
   }
 
+  // A figure is an image, or a silent looping video when the item carries
+  // `video: { mp4, webm, poster }` (the poster shows until the clip loads).
   function figure(img, extraClass) {
     const cap = img.caption ? "<figcaption>" + img.caption + "</figcaption>" : "";
+    let media;
+    if (img.video) {
+      const v = img.video;
+      media =
+        '<video autoplay muted loop playsinline preload="metadata"' +
+        (v.poster ? ' poster="' + v.poster + '"' : "") +
+        ' aria-label="' + (img.alt || "") + '">' +
+        (v.webm ? '<source src="' + v.webm + '" type="video/webm" />' : "") +
+        (v.mp4 ? '<source src="' + v.mp4 + '" type="video/mp4" />' : "") +
+        "</video>";
+    } else {
+      media = '<img src="' + img.src + '" alt="' + (img.alt || "") + '" loading="lazy" />';
+    }
     return (
       '<figure class="cs-figure' + (extraClass ? " " + extraClass : "") + '">' +
-      '<img src="' + img.src + '" alt="' + (img.alt || "") + '" loading="lazy" />' +
+      media +
       cap +
       "</figure>"
     );

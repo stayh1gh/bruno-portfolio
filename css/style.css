@@ -917,15 +917,18 @@ a.tile:hover .placeholder span {
   margin: 0;
 }
 
-.cs-figure img {
+.cs-figure img,
+.cs-figure video {
   width: 100%;
   height: auto;
   border-radius: 10px;
   display: block;
+  background: #000;
 }
 
 /* Light stroke on every image across the project pages */
 .project-page .cs-figure img,
+.project-page .cs-figure video,
 .project-page .gallery .tile {
   border: 1px solid var(--border-subtle);
 }
@@ -938,7 +941,8 @@ a.tile:hover .placeholder span {
   color: var(--text-subtle);
 }
 
-.cs-figure--hero img {
+.cs-figure--hero img,
+.cs-figure--hero video {
   border-radius: 12px;
 }
 
