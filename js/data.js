@@ -15,7 +15,7 @@ const PROJECTS = [
       bg: "#0a0a0a",
       fg: "#ffffff",
       logo: "images/reflections/logo.svg",
-      tagline: "Built the design system with AI, then designed and shipped the product in code.",
+      tagline: "Built the design system with AI, then shipped the product in code.",
       screen: "images/reflections/walkthrough-poster.jpg",
       tags: ["Product | Design Systems", "Designer-builder"],
     },

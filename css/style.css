@@ -1627,7 +1627,9 @@ a.tile:hover .placeholder span {
   transform: translateY(-50%);
 }
 .feature-media--screen {
-  width: 60%;
+  /* Never wider than the space right of the copy column (left gutter + 360px + a gap),
+     so the screen cannot run under the text at mid widths. */
+  width: min(60%, calc(100% - clamp(24px, 3vw, 40px) - 360px - 32px));
   right: clamp(20px, 2.5vw, 40px);
   top: clamp(48px, 9vh, 84px);
   bottom: clamp(48px, 9vh, 84px);
