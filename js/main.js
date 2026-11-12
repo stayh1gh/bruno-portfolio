@@ -164,8 +164,13 @@ function renderGallery(container, items, altPrefix) {
   let i = 0;
   let step = 0;
   while (i < items.length) {
-    const block = PATTERN[step % PATTERN.length];
+    let block = PATTERN[step % PATTERN.length];
     const rowItems = items.slice(i, i + block.count);
+    // A partly filled last row takes the layout that fits its item count,
+    // so a lone leftover tile spans the full width instead of half of it.
+    if (rowItems.length < block.count) {
+      block = PATTERN.find(function (b) { return b.count === rowItems.length; }) || block;
+    }
     html +=
       '<div class="row">' +
       rowItems

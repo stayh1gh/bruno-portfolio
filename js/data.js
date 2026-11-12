@@ -417,8 +417,8 @@ const PROJECTS = [
 // Add `image` paths when ready; add a `slug` matching a PROJECTS
 // entry to make a tile clickable.
 // Ordered to suit the gallery pattern (full / 2-up / 3-up / full / full /
-// 2-up / final): wide screenshots land in full-width rows, the square logo
-// in a 3-up cell, the portrait page in a half cell.
+// final): wide screenshots land in full-width rows, the portrait page in a
+// half cell.
 const OTHER_WORKS = [
   {
     title: "BuzzFeed campaign builder",
@@ -429,9 +429,9 @@ const OTHER_WORKS = [
   },
   { title: "Walmart Marketplace — Pro Seller", image: "images/other/walmart-proseller.png" },
   { title: "Pugs rewards dashboard", image: "images/other/pugs-rewards.png" },
-  { title: "FC Bagres crest", image: "images/other/fc-bagres.png" },
   { title: "Nike Air Force app", image: "images/other/nike-airforce.png" },
   { title: "Tribe onboarding", image: "images/other/tribe-onboarding.png" },
+  { title: "Music app", image: "images/other/music-app.png" },
   {
     title: "Mentorsclub app",
     image: "images/other/mentorsclub.png",
@@ -443,7 +443,6 @@ const OTHER_WORKS = [
     image: "images/other/buzzfeed-quiz.png",
     natural: true,
   },
-  { title: "Music app", image: "images/other/music-app.png" },
   { title: "ChildFund donations", image: "images/other/childfund.png" },
 ];
 
