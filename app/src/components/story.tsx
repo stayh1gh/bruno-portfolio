@@ -139,9 +139,9 @@ export function Story() {
   const g3 = useGhostSize(ghost3)
   const mobile = vp.w < 768
   const fit = (g: { w: number; h: number }, wf: number, hf: number) => (g.w && g.h ? Math.min((vp.w * wf) / g.w, (vp.h * hf) / g.h) : 1)
-  const s1 = Math.min(mobile ? 1.6 : 2.6, fit(g1, mobile ? 0.9 : 0.9, 0.5)) // zoomed in on line 1
-  const s2 = Math.min(s1, fit(g2, mobile ? 0.9 : 0.72, mobile ? 0.58 : 0.56)) // after "teams."
-  const s3 = Math.min(s2, 1, fit(g3, mobile ? 0.9 : 0.72, mobile ? 0.6 : 0.58)) // the whole story
+  const s1 = Math.min(mobile ? 1.6 : 2.8, fit(g1, mobile ? 0.9 : 0.94, 0.5)) // zoomed in on line 1
+  const s2 = Math.min(s1, fit(g2, mobile ? 0.9 : 0.86, mobile ? 0.56 : 0.5)) // after "teams."
+  const s3 = Math.min(s2, mobile ? 1 : 1.5, fit(g3, mobile ? 0.9 : 0.84, mobile ? 0.56 : 0.52)) // the whole story
   const stops = useRef({ s1, s2, s3 })
   stops.current = { s1, s2, s3 }
 
@@ -216,12 +216,18 @@ export function Story() {
     ro.observe(el)
     return () => ro.disconnect()
   }, [boxH])
-  const ringSize = n === 0 ? (mobile ? 96 : 120) : mobile ? 52 : 60
+  const ringSize = n === 0 ? (mobile ? 96 : 120) : mobile ? 52 : 72
   const ringYRaw = useTransform(() => {
     const h = boxH.get()
     return h === 0 ? 0 : -(h * scale.get()) / 2 - (mobile ? 26 : 36) - ringSize / 2
   })
   const ringY = useSpring(ringYRaw, { stiffness: 80, damping: 20 })
+  // Centre the ring and the text together, not just the text.
+  const ringGap = mobile ? 26 : 36
+  const stageY = useSpring(0, { stiffness: 80, damping: 20 })
+  useEffect(() => {
+    stageY.set(n === 0 ? 0 : (ringSize + ringGap) / 2)
+  }, [n === 0, ringSize, ringGap, stageY]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Leaving: the story dims and recedes as the work section comes up.
   const exitOpacity = useTransform(scrollYProgress, [0.82, 1], [1, 0.35])
@@ -242,7 +248,7 @@ export function Story() {
       </div>
 
       <div className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
-        <motion.div aria-hidden className="relative flex items-center justify-center" style={{ opacity: exitOpacity, scale: exitScale, filter: exitBlur }}>
+        <motion.div aria-hidden className="relative flex items-center justify-center" style={{ opacity: exitOpacity, scale: exitScale, filter: exitBlur, y: stageY }}>
           <motion.div className="absolute z-10" style={{ y: ringY }} initial={{ opacity: 0, scale: 0.4 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.2, ease: [0.2, 0.7, 0.2, 1] }}>
             <motion.div initial={false} animate={{ width: ringSize, height: ringSize }} transition={{ type: 'spring', stiffness: 80, damping: 18 }}>
               <NeonRing ref={ringRef} size="100%" />
