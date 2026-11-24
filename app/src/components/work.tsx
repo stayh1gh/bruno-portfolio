@@ -90,16 +90,16 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         <Wrapper
           {...(project.href ? { href: project.href } : {})}
           aria-label={`${project.line} — ${project.client}`}
-          className="group/card flex flex-col rounded-xl bg-card outline-none focus-visible:ring-2 focus-visible:ring-accent-2/60"
+          className="group/card flex flex-col gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-accent-2/60"
         >
           <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-line bg-card">
             <motion.div className="size-full" style={{ scale: zoom }}>
               <CardMedia media={project.media} label={project.client} />
             </motion.div>
           </div>
-          <motion.div style={{ y: textY, opacity: textOpacity }} className="flex items-start gap-3 px-4 pb-4 pt-3.5">
-            <div className="flex min-w-0 flex-1 flex-col gap-2.5">
-              <p className="text-[17px] leading-[1.4] tracking-[-0.01em] text-fg">
+          <motion.div style={{ y: textY, opacity: textOpacity }} className="flex items-start gap-3 rounded-b-xl bg-card px-4 py-2.5">
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <p className="text-base leading-[1.4] text-fg">
                 <span className="bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat transition-[background-size] duration-500 ease-[cubic-bezier(.2,.7,.2,1)] group-hover/card:bg-[length:100%_1px]">
                   {project.line}
                 </span>
@@ -110,7 +110,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
                 ))}
               </div>
             </div>
-            <span title={project.client} className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-md border border-line bg-bg font-mono text-[10px] text-fg">
+            <span title={project.client} className="grid size-6 shrink-0 place-items-center rounded-[5px] border-[0.6px] border-line bg-[#18181b] font-mono text-[8px] text-fg">
               {project.mark}
             </span>
           </motion.div>
