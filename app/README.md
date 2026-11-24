@@ -13,4 +13,4 @@ npm run dev   # http://localhost:4185
 - `src/components/story.tsx` — typed story: zooms out as it grows, scrolling fast-forwards it.
 - `src/components/neon-ring.tsx` — the glowing ring, drawn in code (no image).
 - `src/components/fx/*` — hover effects: letter roll, magnetic pull, arrow swap; glare lives in `ui/button.tsx`.
-- Palette: `?palette=blue-yellow` or `?palette=blues`, or the switch at the bottom-left (review only).
+- Palette: shades of blue; tokens at the top of `src/index.css`.

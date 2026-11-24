@@ -20,25 +20,8 @@
   --color-accent-fg: var(--accent-fg);
 }
 
-/* Palette A — blue + yellow (default). Text accents: yellow (a) and light blue (b). */
-:root,
-[data-palette='blue-yellow'] {
-  --bg: #07080d;
-  --fg: #f3f1ea;
-  --muted: #9b9dab;
-  --subtle: #5f6272;
-  --line: rgb(255 255 255 / 0.09);
-  --card: #0f1018;
-  --accent: #ffd23f;
-  --accent-2: #8fb4ff;
-  --accent-fg: #07080d;
-  --ring-core: #8fdcff;
-  --ring-mid: #3b8bff;
-  --ring-glow: #2a46ff;
-}
-
-/* Palette B — shades of blue. */
-[data-palette='blues'] {
+/* Palette: shades of blue (Bruno's pick, 2026-11-24). Text accents: electric blue (a) and ice blue (b). */
+:root {
   --bg: #050816;
   --fg: #eef2ff;
   --muted: #95a0c2;
@@ -59,7 +42,6 @@ html {
   scrollbar-gutter: stable;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.4s ease;
 }
 
 body {
