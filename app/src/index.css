@@ -20,17 +20,17 @@
   --color-accent-fg: var(--accent-fg);
 }
 
-/* Palette: shades of blue (Bruno's pick, 2026-11-24). Text accents: electric blue (a) and ice blue (b). */
+/* Palette: black background, shades of blue (Bruno's pick, 2026-11-24). Text accents: electric blue (a) and ice blue (b). */
 :root {
-  --bg: #050816;
+  --bg: #000000;
   --fg: #eef2ff;
   --muted: #95a0c2;
   --subtle: #56608a;
   --line: rgb(170 190 255 / 0.11);
-  --card: #0a1024;
+  --card: #0b0c12;
   --accent: #5b86ff;
   --accent-2: #b9d5ff;
-  --accent-fg: #050816;
+  --accent-fg: #000000;
   --ring-core: #a9e2ff;
   --ring-mid: #4f8dff;
   --ring-glow: #2b3dff;
@@ -96,4 +96,11 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .char { animation: none; }
   .caret { animation: none; }
+}
+
+/* Story: letters not typed yet keep their space so the text never shifts. */
+.char-wait {
+  display: inline-block;
+  white-space: pre;
+  opacity: 0;
 }

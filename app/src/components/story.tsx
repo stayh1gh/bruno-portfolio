@@ -1,9 +1,9 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { AnimatePresence, motion, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react'
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { STORY, type StoryStyle } from '@/data'
 import { cn } from '@/lib/utils'
 import { keyClick } from '@/lib/typing-sound'
-import { NeonRing, type RingHandle } from './neon-ring'
+import { NeonRing } from './neon-ring'
 
 // ── Flatten the story into typed units ───────────────────────────────────────────────
 type Char = { ch: string; s?: StoryStyle; i: number }
@@ -53,7 +53,8 @@ const STYLE: Record<StoryStyle, string> = {
 
 // ── Pacing ───────────────────────────────────────────────────────────────────────────
 // The ring loads alone, then the story is typed at an even pace. Pauses come from the
-// copy itself ({ pause } in data.ts). No zoom: the text is set at its final size.
+// copy itself ({ pause } in data.ts). The text is laid out at its final size and place
+// from the start, so typing never moves it.
 const LOADER_MS = 1600
 const CPS = 14 // letters per second
 const SMALL_PAUSE = { ',': 140, ' ': 35, '\n': 160 } as Record<string, number>
@@ -64,33 +65,50 @@ const TEXT_CLASS = cn(
   'md:w-max md:max-w-none md:text-[clamp(34px,3.3vw,60px)] md:leading-[1.22] md:tracking-[-0.03em]',
 )
 
-function renderUnits(units: Unit[], limit: number, animate: boolean): ReactNode[] {
-  return units.map((u, k) => {
-    if (u.kind === 'br') return u.i < limit ? <br key={k} /> : null
-    if (u.kind === 'space') return u.i < limit ? <span key={k} className={u.s === 's' ? 'font-serif italic' : undefined}> </span> : null
-    if (u.start >= limit) return null
-    return (
+function renderUnits(units: Unit[], limit: number, caret: ReactNode): ReactNode[] {
+  // Every letter is in the layout from the start (hidden until typed), so lines are
+  // balanced and centred on the final text and nothing shifts while typing.
+  const at = limit - 1 // index of the last typed character; the caret sits right after it
+  const out: ReactNode[] = []
+  units.forEach((u, k) => {
+    if (u.kind === 'br') {
+      out.push(<br key={k} />)
+      if (u.i === at) out.push(<Caret key="caret" el={caret} />)
+      return
+    }
+    if (u.kind === 'space') {
+      out.push(
+        <span key={k} className={u.s === 's' ? 'font-serif italic' : undefined}>
+          {' '}
+        </span>,
+      )
+      if (u.i === at) out.push(<Caret key="caret" el={caret} />)
+      return
+    }
+    out.push(
       <span key={k} className="inline-block whitespace-nowrap">
-        {u.chars.map((c) =>
-          c.i < limit ? (
-            <span key={c.i} className={cn(animate ? 'char' : 'inline-block whitespace-pre', c.s && STYLE[c.s])}>
-              {c.ch}
-            </span>
-          ) : null,
-        )}
-      </span>
+        {u.chars.map((c) => (
+          <Fragment key={c.i}>
+            <span className={cn(c.i < limit ? 'char' : 'char-wait', c.s && STYLE[c.s])}>{c.ch}</span>
+            {c.i === at && <Caret el={caret} />}
+          </Fragment>
+        ))}
+      </span>,
     )
   })
+  return out
+}
+
+/** Zero-width anchor so the caret never pushes letters around. */
+function Caret({ el }: { el: ReactNode }) {
+  return <span className="relative inline-block w-0 align-baseline">{el}</span>
 }
 
 export function Story() {
   const reduce = useReducedMotion()
   const { units, total, text, pauseAt } = useMemo(flatten, [])
-  const wordEnds = useMemo(() => units.flatMap((u) => (u.kind === 'word' ? [u.end] : [])), [units])
 
   const containerRef = useRef<HTMLDivElement>(null)
-  const blockRef = useRef<HTMLParagraphElement>(null)
-  const ringRef = useRef<RingHandle>(null)
 
   const [n, setN] = useState(0)
   const nRef = useRef(0)
@@ -142,36 +160,8 @@ export function Story() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reduce, scrollYProgress, total, text, pauseAt])
 
-  // The ring pulses softly every time a word lands.
-  const wordsDone = useRef(0)
-  useEffect(() => {
-    let k = 0
-    while (k < wordEnds.length && wordEnds[k] <= n) k++
-    if (k > wordsDone.current) ringRef.current?.pulse(Math.min(1.2, (k - wordsDone.current) * 0.6))
-    wordsDone.current = k
-  }, [n, wordEnds])
-
-  // Ring: the loader, alone in the centre; once the story starts it floats above the text.
-  const boxH = useMotionValue(0)
-  useLayoutEffect(() => {
-    const el = blockRef.current
-    if (!el) return
-    const ro = new ResizeObserver(() => boxH.set(nRef.current === 0 ? 0 : el.offsetHeight))
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [boxH])
-  const ringSize = n === 0 ? (mobile ? 96 : 120) : mobile ? 52 : 64
-  const ringYRaw = useTransform(() => {
-    const h = boxH.get()
-    return h === 0 ? 0 : -h / 2 - (mobile ? 26 : 36) - ringSize / 2
-  })
-  const ringY = useSpring(ringYRaw, { stiffness: 55, damping: 20 })
-  // Centre the ring and the text together, not just the text.
-  const ringGap = mobile ? 26 : 36
-  const stageY = useSpring(0, { stiffness: 55, damping: 20 })
-  useEffect(() => {
-    stageY.set(n === 0 ? 0 : (ringSize + ringGap) / 2)
-  }, [n === 0, ringSize, ringGap, stageY]) // eslint-disable-line react-hooks/exhaustive-deps
+  // The ring is the loader: alone in the centre, then it fades away as the text appears.
+  const ringSize = mobile ? 96 : 120
 
   // Leaving: the story dims and recedes as the work section comes up.
   const exitOpacity = useTransform(scrollYProgress, [0.82, 1], [1, 0.35])
@@ -185,21 +175,18 @@ export function Story() {
       <p className="sr-only">{STORY.map((s) => ('br' in s ? ' ' : 't' in s ? s.t : '')).join('')}</p>
 
       <div className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
-        <motion.div aria-hidden className="relative flex items-center justify-center" style={{ opacity: exitOpacity, scale: exitScale, filter: exitBlur, y: stageY }}>
-          <motion.div className="absolute z-10" style={{ y: ringY }} initial={{ opacity: 0, scale: 0.4 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.2, ease: [0.2, 0.7, 0.2, 1] }}>
-            <motion.div initial={false} animate={{ width: ringSize, height: ringSize }} transition={{ type: 'spring', stiffness: 80, damping: 18 }}>
-              <NeonRing ref={ringRef} size="100%" />
-            </motion.div>
+        <motion.div aria-hidden className="relative flex items-center justify-center" style={{ opacity: exitOpacity, scale: exitScale, filter: exitBlur }}>
+          <motion.div
+            className="pointer-events-none absolute"
+            initial={{ opacity: 0, scale: 0.4 }}
+            animate={n === 0 ? { opacity: 1, scale: 1, filter: 'blur(0px)' } : { opacity: 0, scale: 0.7, filter: 'blur(10px)' }}
+            transition={n === 0 ? { duration: 1.2, ease: [0.2, 0.7, 0.2, 1] } : { duration: 0.9, ease: [0.4, 0, 0.2, 1] }}
+            style={{ width: ringSize, height: ringSize }}
+          >
+            <NeonRing size="100%" />
           </motion.div>
 
-          <motion.div layout="position" transition={{ layout: { type: 'spring', stiffness: 55, damping: 20 } }}>
-            <p ref={blockRef} className={TEXT_CLASS}>
-              {renderUnits(units, n, true)}
-              {n > 0 && (
-                <span className={cn('caret ml-[0.06em] inline-block h-[0.95em] w-[2px] translate-y-[0.14em] rounded-full bg-accent', done && 'opacity-80')} />
-              )}
-            </p>
-          </motion.div>
+          <p className={TEXT_CLASS}>{renderUnits(units, n, <span className={cn('caret absolute -top-[0.8em] left-[0.05em] h-[0.95em] w-[2px] rounded-full bg-accent', done && 'opacity-80')} />)}</p>
         </motion.div>
 
         <ScrollCue done={done} progress={n / total} />
