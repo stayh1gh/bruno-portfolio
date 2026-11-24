@@ -15,7 +15,7 @@ export function Footer() {
     viewport: { once: true, margin: '-60px' },
   }
   return (
-    <footer id="contact" className="relative flex flex-col items-center px-5 pb-12 pt-16 text-center md:pt-24">
+    <footer id="contact" className="relative flex flex-col items-center px-5 pb-12 pt-24 text-center md:pt-40">
       <motion.div {...rise} transition={{ duration: 0.9 }}>
         <NeonRing ref={ring} size={84} />
       </motion.div>

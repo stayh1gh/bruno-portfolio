@@ -13,7 +13,7 @@ export function Work() {
   const list = PROJECTS.filter((p) => filter === 'All' || p.tags.includes(filter))
 
   return (
-    <section id="work" className="relative mx-auto w-full max-w-[1248px] scroll-mt-16 px-5 pb-28 pt-10 md:px-8 md:pb-36 xl:px-0">
+    <section id="work" className="relative mx-auto w-full max-w-[1248px] scroll-mt-16 px-5 pb-40 pt-24 md:px-8 md:pb-56 md:pt-40 xl:px-0">
       <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <motion.h2
           initial={{ opacity: 0, y: 24, filter: 'blur(8px)' }}
@@ -55,7 +55,7 @@ export function Work() {
         </LayoutGroup>
       </div>
 
-      <motion.ul layout className="mt-12 grid gap-x-5 gap-y-6 sm:grid-cols-2 md:mt-16 lg:grid-cols-3">
+      <motion.ul layout className="mt-14 grid gap-x-5 gap-y-10 sm:grid-cols-2 md:mt-20 md:gap-y-12 lg:grid-cols-3">
         <AnimatePresence mode="popLayout" initial={false}>
           {list.map((p, i) => (
             <ProjectCard key={p.slug} project={p} index={i} />
