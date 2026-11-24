@@ -4,21 +4,33 @@
 
 /** Story text style: b = bold, s = serif italic, a = accent colour, c = second accent colour. */
 export type StoryStyle = 'b' | 's' | 'a' | 'c'
-export type StorySeg = { t: string; s?: StoryStyle } | { br: true }
+/** `pause` holds the typing for that many milliseconds at that point. */
+export type StorySeg = { t: string; s?: StoryStyle } | { br: true } | { pause: number }
 
-/** The intro typed on the first screen: three short lines, a pause after each. */
+/** The intro typed on the first screen. Pauses are where Bruno asked for them. */
 export const STORY: StorySeg[] = [
-  { t: 'Hi, I’m ' },
-  { t: 'Bruno Paradas,', s: 'b' },
-  { t: ' Design Engineer' },
+  { t: 'Hi,' },
+  { pause: 900 },
+  { t: ' I’m ' },
+  { t: 'Bruno Paradas', s: 'b' },
+  { pause: 1100 },
+  { br: true },
+  { t: 'Design Engineer,' },
+  { pause: 700 },
   { br: true },
   { t: 'I ' },
-  { t: 'design, build and ship', s: 'a' },
+  { t: 'design,', s: 'a' },
+  { pause: 650 },
+  { t: ' build,', s: 'a' },
+  { pause: 650 },
+  { t: ' and ship', s: 'a' },
   { t: ' web products and ' },
   { t: 'design systems', s: 's' },
+  { pause: 1200 },
   { br: true },
   { t: 'Currently working at ' },
   { t: 'Buzzfeed', s: 'c' },
+  { t: '.' },
 ]
 
 /** The long version of the story, saved for the About overlay. */
