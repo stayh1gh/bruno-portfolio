@@ -3,7 +3,6 @@ import { AnimatePresence, LayoutGroup, motion, useInView, useScroll, useTransfor
 import { FILTERS, PROJECTS, type Media, type Project } from '@/data'
 import { cn } from '@/lib/utils'
 import { Badge } from './ui/badge'
-import { ArrowSwap } from './fx/arrow-swap'
 import { ChompVisual } from './chomp-visual'
 
 type Filter = (typeof FILTERS)[number]
@@ -55,7 +54,7 @@ export function Work() {
         </LayoutGroup>
       </div>
 
-      <motion.ul layout className="mt-14 grid gap-x-5 gap-y-10 sm:grid-cols-2 md:mt-20 md:gap-y-12 lg:grid-cols-3">
+      <motion.ul layout className="mt-14 grid gap-x-6 gap-y-10 sm:grid-cols-2 md:mt-20 md:gap-y-12 lg:grid-cols-3">
         <AnimatePresence mode="popLayout" initial={false}>
           {list.map((p, i) => (
             <ProjectCard key={p.slug} project={p} index={i} />
@@ -87,33 +86,33 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       transition={{ layout: { type: 'spring', stiffness: 260, damping: 30 } }}
     >
       <motion.div style={{ scale, opacity }} className="origin-bottom">
+        {/* Figma "ProjectCard": media on top, then a footer panel with the line, tags and company mark. */}
         <Wrapper
           {...(project.href ? { href: project.href } : {})}
-          className="group/card group/roll block rounded-[20px] border border-line bg-card p-2 outline-none transition-[border-color,transform] duration-500 hover:-translate-y-1 hover:border-fg/15 focus-visible:ring-2 focus-visible:ring-accent-2/60"
+          aria-label={`${project.line} — ${project.client}`}
+          className="group/card flex flex-col rounded-xl bg-card outline-none focus-visible:ring-2 focus-visible:ring-accent-2/60"
         >
-          <div className="relative aspect-[4/3] overflow-hidden rounded-[14px] bg-bg">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-line bg-card">
             <motion.div className="size-full" style={{ scale: zoom }}>
               <CardMedia media={project.media} label={project.client} />
             </motion.div>
-            <div className="pointer-events-none absolute inset-0 rounded-[14px] ring-1 ring-inset ring-white/5" />
           </div>
-          <motion.div style={{ y: textY, opacity: textOpacity }}>
-            <div className="flex items-start justify-between gap-4 px-2 pb-2 pt-4">
-              <div>
-                <p className="text-[17px] font-medium leading-snug tracking-[-0.01em] text-fg">{project.line}</p>
-                <p className="mt-1 text-[15px] text-subtle">{project.client}</p>
-              </div>
-              {project.href && (
-                <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line text-muted transition-colors duration-300 group-hover/card:border-accent-2/40 group-hover/card:bg-accent-2/10 group-hover/card:text-accent-2">
-                  <ArrowSwap />
+          <motion.div style={{ y: textY, opacity: textOpacity }} className="flex items-start gap-3 px-4 pb-4 pt-3.5">
+            <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+              <p className="text-[17px] leading-[1.4] tracking-[-0.01em] text-fg">
+                <span className="bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat transition-[background-size] duration-500 ease-[cubic-bezier(.2,.7,.2,1)] group-hover/card:bg-[length:100%_1px]">
+                  {project.line}
                 </span>
-              )}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {project.tags.map((t) => (
+                  <Badge key={t}>{t}</Badge>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-1.5 px-2 pb-2 pt-1">
-              {project.tags.map((t) => (
-                <Badge key={t}>{t}</Badge>
-              ))}
-            </div>
+            <span title={project.client} className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-md border border-line bg-bg font-mono text-[10px] text-fg">
+              {project.mark}
+            </span>
           </motion.div>
         </Wrapper>
       </motion.div>
@@ -129,7 +128,7 @@ function CardMedia({ media, label }: { media: Media; label: string }) {
       src={media.src}
       alt={`${label} screens`}
       loading="lazy"
-      className="size-full object-cover transition-[transform] duration-[1.4s] ease-[cubic-bezier(.2,.7,.2,1)] group-hover/card:scale-[1.06]"
+      className="size-full object-cover transition-[transform] duration-[1.4s] ease-[cubic-bezier(.2,.7,.2,1)] group-hover/card:scale-[1.03]"
       style={{ objectPosition: media.position ?? 'center', background: media.bg }}
     />
   )
@@ -154,7 +153,7 @@ function LoopVideo({ media, label }: { media: Extract<Media, { kind: 'video' }>;
       preload="metadata"
       poster={media.poster}
       aria-label={`${label} walkthrough`}
-      className="size-full object-cover transition-transform duration-[1.4s] ease-[cubic-bezier(.2,.7,.2,1)] group-hover/card:scale-[1.04]"
+      className="size-full object-cover transition-transform duration-[1.4s] ease-[cubic-bezier(.2,.7,.2,1)] group-hover/card:scale-[1.03]"
     >
       <source src={media.webm} type="video/webm" />
       <source src={media.mp4} type="video/mp4" />

@@ -78,6 +78,8 @@ export type Project = {
   slug: string
   line: string
   client: string
+  /** Two-letter company mark shown in the card footer. */
+  mark: string
   tags: string[]
   media: Media
   href?: string
@@ -88,6 +90,7 @@ export const PROJECTS: Project[] = [
     slug: 'reflections',
     line: 'Building a design system AI agents can read',
     client: 'Reflections',
+    mark: 'RF',
     tags: ['Design systems', 'AI', 'Front-end'],
     media: {
       kind: 'video',
@@ -101,6 +104,7 @@ export const PROJECTS: Project[] = [
     slug: 'chomp',
     line: 'Designing an agent workflow from Figma to PR',
     client: 'Chomp',
+    mark: 'CH',
     tags: ['AI', 'Tools', 'Design'],
     media: { kind: 'chomp' },
   },
@@ -108,6 +112,7 @@ export const PROJECTS: Project[] = [
     slug: 'gameplaywiz',
     line: 'Matching new players with pro reviewers',
     client: 'GameplayWiz',
+    mark: 'GW',
     tags: ['UX/UI', 'Product'],
     media: { kind: 'image', src: '/images/cards/gameplaywiz.webp' },
     href: '/project.html?project=gameplaywiz',
@@ -116,6 +121,7 @@ export const PROJECTS: Project[] = [
     slug: 'buzzfeed-campaign',
     line: 'Turning campaign setup into one guided flow',
     client: 'BuzzFeed',
+    mark: 'BF',
     tags: ['UX/UI', 'Design'],
     media: { kind: 'image', src: '/images/other/buzzfeed-campaign.webp', position: 'center top', bg: '#f2f5f9' },
   },
@@ -123,6 +129,7 @@ export const PROJECTS: Project[] = [
     slug: 'buzzfeed-quiz',
     line: 'Rethinking how quizzes get played',
     client: 'BuzzFeed',
+    mark: 'BF',
     tags: ['Interaction', 'UX/UI'],
     media: { kind: 'image', src: '/images/other/buzzfeed-quiz.webp' },
   },
@@ -130,6 +137,7 @@ export const PROJECTS: Project[] = [
     slug: 'walmart-proseller',
     line: 'Giving pro sellers a clearer dashboard',
     client: 'Walmart Marketplace',
+    mark: 'WM',
     tags: ['UX/UI', 'Data'],
     media: { kind: 'image', src: '/images/other/walmart-proseller.webp', position: 'center top' },
   },
