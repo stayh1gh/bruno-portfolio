@@ -48,10 +48,9 @@ const STYLE: Record<StoryStyle, string> = {
 
 // ── Pacing ───────────────────────────────────────────────────────────────────────────
 // 1. The ring loads alone.
-// 2. Zoomed in, line 1 is typed ("Hi, I’m Bruno Paradas, a Design Engineer from Brazil.").
-// 3. A pause. Then the next lines are typed and the camera pulls back a little with
-//    every letter, until "…multidisciplinary teams."
-// 4. Another pause. Then the rest is typed while the camera pulls back to its final size.
+// 2. Zoomed in, line 1 is typed ("Hi, I’m Bruno Paradas, Design Engineer").
+// 3. A pause. Then line 2 is typed and the camera pulls back a little with every letter.
+// 4. Another pause. Then line 3 is typed while the camera pulls back to its final size.
 const LOADER_MS = 1600
 const HOLD_MS = 1600 // the two pauses
 const LINE1_CPS = 15
@@ -64,18 +63,15 @@ function lerp(a: number, b: number, t: number) {
 
 const TEXT_CLASS = cn(
   'text-center font-sans font-medium text-fg [text-wrap:balance]',
-  'max-w-[262px] text-[17px] leading-[1.45] tracking-[-0.01em]',
-  'md:w-max md:max-w-none md:text-[30px] md:leading-[1.42] md:tracking-[-0.02em]',
+  'max-w-[300px] text-[22px] leading-[1.32] tracking-[-0.015em]',
+  'md:w-max md:max-w-none md:text-[30px] md:leading-[1.3] md:tracking-[-0.025em]',
 )
 
 function renderUnits(units: Unit[], limit: number, animate: boolean): ReactNode[] {
   return units.map((u, k) => {
     if (u.kind === 'br')
       return u.i < limit ? (
-        <span key={k}>
-          <br className="max-md:hidden" />
-          <span className="md:hidden"> </span>
-        </span>
+        <br key={k} />
       ) : null
     if (u.kind === 'space') return u.i < limit ? <span key={k} className={u.s === 's' ? 'font-serif italic' : undefined}> </span> : null
     if (u.start >= limit) return null
@@ -111,8 +107,9 @@ function useGhostSize(ref: RefObject<HTMLParagraphElement | null>) {
 export function Story() {
   const reduce = useReducedMotion()
   const { units, total, text } = useMemo(flatten, [])
-  const line1End = text.indexOf('Brazil.') + 'Brazil.'.length
-  const part2End = text.indexOf('teams.') + 'teams.'.length
+  // The story pauses at the end of line 1 and line 2.
+  const line1End = text.indexOf('\n')
+  const part2End = text.indexOf('\n', line1End + 1)
   const wordEnds = useMemo(() => units.flatMap((u) => (u.kind === 'word' ? [u.end] : [])), [units])
 
   const containerRef = useRef<HTMLDivElement>(null)
@@ -139,9 +136,9 @@ export function Story() {
   const g3 = useGhostSize(ghost3)
   const mobile = vp.w < 768
   const fit = (g: { w: number; h: number }, wf: number, hf: number) => (g.w && g.h ? Math.min((vp.w * wf) / g.w, (vp.h * hf) / g.h) : 1)
-  const s1 = Math.min(mobile ? 1.6 : 2.8, fit(g1, mobile ? 0.9 : 0.94, 0.5)) // zoomed in on line 1
-  const s2 = Math.min(s1, fit(g2, mobile ? 0.9 : 0.86, mobile ? 0.56 : 0.5)) // after "teams."
-  const s3 = Math.min(s2, mobile ? 1 : 1.5, fit(g3, mobile ? 0.9 : 0.84, mobile ? 0.56 : 0.52)) // the whole story
+  const s1 = Math.min(mobile ? 1.6 : 3, fit(g1, mobile ? 0.9 : 0.92, 0.5)) // zoomed in on line 1
+  const s2 = Math.min(s1, fit(g2, mobile ? 0.9 : 0.84, mobile ? 0.56 : 0.5)) // after line 2
+  const s3 = Math.min(s2, mobile ? 1.4 : 2.2, fit(g3, mobile ? 0.86 : 0.76, mobile ? 0.56 : 0.52)) // the whole story
   const stops = useRef({ s1, s2, s3 })
   stops.current = { s1, s2, s3 }
 

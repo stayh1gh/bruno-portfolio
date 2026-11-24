@@ -6,7 +6,23 @@
 export type StoryStyle = 'b' | 's' | 'a' | 'c'
 export type StorySeg = { t: string; s?: StoryStyle } | { br: true }
 
+/** The intro typed on the first screen: three short lines, a pause after each. */
 export const STORY: StorySeg[] = [
+  { t: 'Hi, I’m ' },
+  { t: 'Bruno Paradas,', s: 'b' },
+  { t: ' Design Engineer' },
+  { br: true },
+  { t: 'I ' },
+  { t: 'design, build and ship', s: 'a' },
+  { t: ' web products and ' },
+  { t: 'design systems', s: 's' },
+  { br: true },
+  { t: 'Currently working at ' },
+  { t: 'Buzzfeed', s: 'c' },
+]
+
+/** The long version of the story, saved for the About overlay. */
+export const STORY_LONG: StorySeg[] = [
   { t: 'Hi, I’m ' },
   { t: 'Bruno Paradas,', s: 'b' },
   { t: ' a Design Engineer from ' },
