@@ -88,6 +88,11 @@ body {
   100% { transform: translateY(0); opacity: 0; }
 }
 
+@keyframes eq {
+  from { transform: scaleY(0.25); }
+  to { transform: scaleY(1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .char { animation: none; }
   .caret { animation: none; }

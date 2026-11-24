@@ -7,6 +7,7 @@ import { Footer } from './components/footer'
 import { Overlay } from './components/overlay'
 import { About } from './components/about'
 import { OtherWork } from './components/other-work'
+import { SoundToggle } from './components/sound-toggle'
 
 export default function App() {
   const [panel, setPanel] = useState<Panel>(null)
@@ -23,6 +24,7 @@ export default function App() {
       <Overlay open={panel !== null} label={panel === 'other' ? 'Other work' : 'About'} onClose={close}>
         {(scrollRef) => (panel === 'other' ? <OtherWork /> : <About scrollRef={scrollRef} />)}
       </Overlay>
+      <SoundToggle />
     </MotionConfig>
   )
 }

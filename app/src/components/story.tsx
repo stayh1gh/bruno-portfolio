@@ -1,7 +1,8 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react'
 import { STORY, type StoryStyle } from '@/data'
 import { cn } from '@/lib/utils'
+import { keyClick } from '@/lib/typing-sound'
 import { NeonRing, type RingHandle } from './neon-ring'
 
 // ── Flatten the story into typed units ───────────────────────────────────────────────
@@ -10,6 +11,7 @@ type Unit = { kind: 'word'; start: number; end: number; chars: Char[] } | { kind
 
 function flatten() {
   const units: Unit[] = []
+  let text = ''
   let i = 0
   let word: Char[] | null = null
   const closeWord = () => {
@@ -20,6 +22,7 @@ function flatten() {
     if ('br' in seg) {
       closeWord()
       units.push({ kind: 'br', i: i++ })
+      text += '\n'
       continue
     }
     for (const ch of seg.t) {
@@ -29,10 +32,11 @@ function flatten() {
       } else {
         ;(word ??= []).push({ ch, s: seg.s, i: i++ })
       }
+      text += ch
     }
   }
   closeWord()
-  return { units, total: i }
+  return { units, total: i, text }
 }
 
 const STYLE: Record<StoryStyle, string> = {
@@ -42,35 +46,127 @@ const STYLE: Record<StoryStyle, string> = {
   c: 'text-accent-2',
 }
 
-const LOADER_MS = 1800 // the ring alone, before the first letter
-const INTRO_CPS = 15 // "Hi, I’m Bruno Paradas,"
-const STORY_CPS = 11 // everything after it: slow, like someone talking
-const INTRO_END = 'Hi, I’m Bruno Paradas,'.length
+// ── Pacing ───────────────────────────────────────────────────────────────────────────
+// 1. The ring loads alone.
+// 2. Zoomed in, line 1 is typed ("Hi, I’m Bruno Paradas, a Design Engineer from Brazil.").
+// 3. A pause. Then the next lines are typed and the camera pulls back a little with
+//    every letter, until "…multidisciplinary teams."
+// 4. Another pause. Then the rest is typed while the camera pulls back to its final size.
+const LOADER_MS = 1600
+const HOLD_MS = 1600 // the two pauses
+const LINE1_CPS = 15
+const STORY_CPS = 13
+const PAUSE = { '.': 420, ',': 200, '\n': 320, ' ': 0 } as Record<string, number>
+
+function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * Math.min(1, Math.max(0, t))
+}
+
+const TEXT_CLASS = cn(
+  'text-center font-sans font-medium text-fg [text-wrap:balance]',
+  'max-w-[262px] text-[17px] leading-[1.45] tracking-[-0.01em]',
+  'md:w-max md:max-w-none md:text-[30px] md:leading-[1.42] md:tracking-[-0.02em]',
+)
+
+function renderUnits(units: Unit[], limit: number, animate: boolean): ReactNode[] {
+  return units.map((u, k) => {
+    if (u.kind === 'br')
+      return u.i < limit ? (
+        <span key={k}>
+          <br className="max-md:hidden" />
+          <span className="md:hidden"> </span>
+        </span>
+      ) : null
+    if (u.kind === 'space') return u.i < limit ? <span key={k} className={u.s === 's' ? 'font-serif italic' : undefined}> </span> : null
+    if (u.start >= limit) return null
+    return (
+      <span key={k} className="inline-block whitespace-nowrap">
+        {u.chars.map((c) =>
+          c.i < limit ? (
+            <span key={c.i} className={cn(animate ? 'char' : 'inline-block whitespace-pre', c.s && STYLE[c.s])}>
+              {c.ch}
+            </span>
+          ) : null,
+        )}
+      </span>
+    )
+  })
+}
+
+/** Measures the unscaled size of the story typed up to `limit`, without showing it. */
+function useGhostSize(ref: RefObject<HTMLParagraphElement | null>) {
+  const [size, setSize] = useState({ w: 0, h: 0 })
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const measure = () => setSize({ w: el.offsetWidth, h: el.offsetHeight })
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    void document.fonts?.ready.then(measure)
+    return () => ro.disconnect()
+  }, [ref])
+  return size
+}
 
 export function Story() {
   const reduce = useReducedMotion()
-  const { units, total } = useMemo(flatten, [])
+  const { units, total, text } = useMemo(flatten, [])
+  const line1End = text.indexOf('Brazil.') + 'Brazil.'.length
+  const part2End = text.indexOf('teams.') + 'teams.'.length
   const wordEnds = useMemo(() => units.flatMap((u) => (u.kind === 'word' ? [u.end] : [])), [units])
 
   const containerRef = useRef<HTMLDivElement>(null)
   const blockRef = useRef<HTMLParagraphElement>(null)
+  const ghost1 = useRef<HTMLParagraphElement>(null)
+  const ghost2 = useRef<HTMLParagraphElement>(null)
+  const ghost3 = useRef<HTMLParagraphElement>(null)
   const ringRef = useRef<RingHandle>(null)
 
   const [n, setN] = useState(0)
   const nRef = useRef(0)
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ['start start', 'end end'] })
 
-  // ── Typing, paced like someone telling a story ──────────────────────────────────────
-  // 1. The ring loads alone for a moment. 2. "Hi, I’m Bruno Paradas," is typed.
-  // 3. A breath, then every other line arrives slowly, pausing at commas, full stops
-  //    and line ends. Scrolling is the only thing that speeds it up.
+  // ── Camera scales for the three stops ───────────────────────────────────────────────
+  const [vp, setVp] = useState({ w: 1440, h: 900 })
+  useLayoutEffect(() => {
+    const on = () => setVp({ w: window.innerWidth, h: window.innerHeight })
+    on()
+    window.addEventListener('resize', on)
+    return () => window.removeEventListener('resize', on)
+  }, [])
+  const g1 = useGhostSize(ghost1)
+  const g2 = useGhostSize(ghost2)
+  const g3 = useGhostSize(ghost3)
+  const mobile = vp.w < 768
+  const fit = (g: { w: number; h: number }, wf: number, hf: number) => (g.w && g.h ? Math.min((vp.w * wf) / g.w, (vp.h * hf) / g.h) : 1)
+  const s1 = Math.min(mobile ? 1.6 : 2.6, fit(g1, mobile ? 0.9 : 0.9, 0.5)) // zoomed in on line 1
+  const s2 = Math.min(s1, fit(g2, mobile ? 0.9 : 0.72, mobile ? 0.58 : 0.56)) // after "teams."
+  const s3 = Math.min(s2, 1, fit(g3, mobile ? 0.9 : 0.72, mobile ? 0.6 : 0.58)) // the whole story
+  const stops = useRef({ s1, s2, s3 })
+  stops.current = { s1, s2, s3 }
+
+  const scaleTarget = useMotionValue(1)
+  const scale = useSpring(scaleTarget, { stiffness: 140, damping: 30 })
+  const scaleFor = (acc: number) => {
+    const { s1, s2, s3 } = stops.current
+    if (acc <= line1End) return s1
+    if (acc <= part2End) return lerp(s1, s2, (acc - line1End) / (part2End - line1End))
+    return lerp(s2, s3, (acc - part2End) / (total - part2End))
+  }
+  // Keep the camera right when the stops are measured or the window changes.
+  useEffect(() => {
+    scaleTarget.set(scaleFor(nRef.current))
+    if (reduce || nRef.current === 0) scale.jump(scaleFor(nRef.current))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s1, s2, s3, reduce])
+
+  // ── Typing ──────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (reduce) {
       nRef.current = total
       setN(total)
       return
     }
-    const chars = units.flatMap((u) => (u.kind === 'word' ? u.chars.map((c) => c.ch) : [u.kind === 'br' ? '\n' : ' ']))
     let raf = 0
     let last = performance.now()
     let holdUntil = last + LOADER_MS
@@ -81,28 +177,26 @@ export function Story() {
       last = now
       const scrollTarget = Math.min(1, scrollYProgress.get() / 0.62) * total
       const forced = scrollTarget > acc + 0.5
-      const cps = acc < INTRO_END ? INTRO_CPS : STORY_CPS
-      let speed = now < holdUntil ? 0 : cps * jitter
+      let speed = now < holdUntil ? 0 : (acc < line1End ? LINE1_CPS : STORY_CPS) * jitter
       if (forced) speed = Math.max(speed, (scrollTarget - acc) * 5, 45)
       const prev = Math.floor(acc)
       acc = Math.min(total, acc + speed * dt)
       const next = Math.floor(acc)
       if (next !== prev) {
-        const ch = chars[next - 1]
-        jitter = 0.7 + Math.random() * 0.6
-        if (!forced) {
-          let pause = ch === '.' ? 1100 : ch === ',' ? 420 : ch === '\n' ? 700 : ch === ' ' ? 40 + Math.random() * 90 : 0
-          if (next === INTRO_END) pause = 1300
-          holdUntil = now + pause
-        }
+        const ch = text[next - 1]
+        jitter = 0.75 + Math.random() * 0.5
+        if (!forced) holdUntil = now + (next === line1End || next === part2End ? HOLD_MS : (PAUSE[ch] ?? 0))
+        keyClick(ch === ' ' ? 'space' : ch === '\n' ? 'enter' : 'char')
         nRef.current = next
         setN(next)
+        scaleTarget.set(scaleFor(next))
       }
       if (acc < total) raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [reduce, scrollYProgress, total, units])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reduce, scrollYProgress, total, text, line1End, part2End])
 
   // The ring pulses softly every time a word lands.
   const wordsDone = useRef(0)
@@ -113,13 +207,7 @@ export function Story() {
     wordsDone.current = k
   }, [n, wordEnds])
 
-  const [mobile, setMobile] = useState(false)
-  useLayoutEffect(() => {
-    const on = () => setMobile(window.innerWidth < 768)
-    on()
-    window.addEventListener('resize', on)
-    return () => window.removeEventListener('resize', on)
-  }, [])
+  // Ring: the loader, alone in the centre; once the story starts it floats above the text.
   const boxH = useMotionValue(0)
   useLayoutEffect(() => {
     const el = blockRef.current
@@ -128,14 +216,12 @@ export function Story() {
     ro.observe(el)
     return () => ro.disconnect()
   }, [boxH])
-
-  // Ring: the loader, alone in the centre; once the story starts it floats above the text.
-  const ringSize = n === 0 ? (mobile ? 96 : 120) : mobile ? 48 : 56
+  const ringSize = n === 0 ? (mobile ? 96 : 120) : mobile ? 52 : 60
   const ringYRaw = useTransform(() => {
     const h = boxH.get()
-    return h === 0 ? 0 : -h / 2 - (mobile ? 24 : 32) - ringSize / 2
+    return h === 0 ? 0 : -(h * scale.get()) / 2 - (mobile ? 26 : 36) - ringSize / 2
   })
-  const ringY = useSpring(ringYRaw, { stiffness: 60, damping: 18 })
+  const ringY = useSpring(ringYRaw, { stiffness: 80, damping: 20 })
 
   // Leaving: the story dims and recedes as the work section comes up.
   const exitOpacity = useTransform(scrollYProgress, [0.82, 1], [1, 0.35])
@@ -146,55 +232,31 @@ export function Story() {
 
   return (
     <section ref={containerRef} aria-label="Intro" className="relative h-[230svh]">
-      <p className="sr-only">
-        {STORY.map((s) => ('br' in s ? ' ' : s.t)).join('')}
-      </p>
+      <p className="sr-only">{STORY.map((s) => ('br' in s ? ' ' : s.t)).join('')}</p>
+
+      {/* Invisible copies used to measure the three camera stops. */}
+      <div aria-hidden className="pointer-events-none invisible fixed left-0 top-0 -z-10 w-screen">
+        <p ref={ghost1} className={cn(TEXT_CLASS, 'absolute')}>{renderUnits(units, line1End, false)}</p>
+        <p ref={ghost2} className={cn(TEXT_CLASS, 'absolute')}>{renderUnits(units, part2End, false)}</p>
+        <p ref={ghost3} className={cn(TEXT_CLASS, 'absolute')}>{renderUnits(units, total, false)}</p>
+      </div>
+
       <div className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
         <motion.div aria-hidden className="relative flex items-center justify-center" style={{ opacity: exitOpacity, scale: exitScale, filter: exitBlur }}>
-          <motion.div className="absolute" style={{ y: ringY }} initial={{ opacity: 0, scale: 0.4 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.4, ease: [0.2, 0.7, 0.2, 1] }}>
+          <motion.div className="absolute z-10" style={{ y: ringY }} initial={{ opacity: 0, scale: 0.4 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.2, ease: [0.2, 0.7, 0.2, 1] }}>
             <motion.div initial={false} animate={{ width: ringSize, height: ringSize }} transition={{ type: 'spring', stiffness: 80, damping: 18 }}>
               <NeonRing ref={ringRef} size="100%" />
             </motion.div>
           </motion.div>
 
-          <motion.p
-            ref={blockRef}
-            layout="position"
-            transition={{ layout: { type: 'spring', stiffness: 70, damping: 20 } }}
-            className={cn(
-              'text-center font-sans font-medium text-fg [text-wrap:balance]',
-              'max-w-[320px] text-[21px] leading-[1.42] tracking-[-0.015em]',
-              'md:w-max md:max-w-none md:text-[30px] md:leading-[1.42] md:tracking-[-0.02em]',
-            )}
-          >
-            {units.map((u, k) => {
-              if (u.kind === 'br')
-                return u.i < n ? (
-                  <span key={k}>
-                    <br className="max-md:hidden" />
-                    <span className="md:hidden"> </span>
-                  </span>
-                ) : null
-              if (u.kind === 'space') return u.i < n ? <span key={k} className={u.s === 's' ? 'font-serif italic' : undefined}> </span> : null
-              if (u.start >= n) return null
-              return (
-                <span key={k} className="inline-block whitespace-nowrap">
-                  {u.chars.map((c) =>
-                    c.i < n ? (
-                      <span key={c.i} className={cn('char', c.s && STYLE[c.s])}>
-                        {c.ch}
-                      </span>
-                    ) : null,
-                  )}
-                </span>
-              )
-            })}
-            {n > 0 && (
-              <span
-                className={cn('caret ml-[0.06em] inline-block h-[0.95em] w-[3px] translate-y-[0.14em] rounded-full bg-accent', done && 'opacity-80')}
-              />
-            )}
-          </motion.p>
+          <motion.div layout="position" transition={{ layout: { type: 'spring', stiffness: 90, damping: 22 } }}>
+            <motion.p ref={blockRef} style={{ scale }} className={TEXT_CLASS}>
+              {renderUnits(units, n, true)}
+              {n > 0 && (
+                <span className={cn('caret ml-[0.06em] inline-block h-[0.95em] w-[2px] translate-y-[0.14em] rounded-full bg-accent', done && 'opacity-80')} />
+              )}
+            </motion.p>
+          </motion.div>
         </motion.div>
 
         <ScrollCue done={done} progress={n / total} />
