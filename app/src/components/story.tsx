@@ -60,8 +60,8 @@ const SMALL_PAUSE = { ',': 130, ' ': 28, '\n': 150 } as Record<string, number>
 
 const TEXT_CLASS = cn(
   'text-center font-sans font-medium text-fg [text-wrap:balance]',
-  'max-w-[340px] text-[30px] leading-[1.25] tracking-[-0.02em]',
-  'md:w-max md:max-w-none md:text-[clamp(38px,3.8vw,68px)] md:leading-[1.22] md:tracking-[-0.03em]',
+  'text-[30px] leading-[1.25] tracking-[-0.02em]',
+  'md:text-[clamp(38px,3.8vw,68px)] md:leading-[1.22] md:tracking-[-0.03em]',
 )
 
 function renderUnits(units: Unit[], limit: number, caret: ReactNode): ReactNode[] {
@@ -172,18 +172,22 @@ export function Story() {
     <section ref={containerRef} aria-label="Intro" className="relative h-[150svh]">
       <p className="sr-only">{STORY.map((s) => ('br' in s ? ' ' : 't' in s ? s.t : '')).join('')}</p>
 
-      <div className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
-        <motion.div aria-hidden className="relative flex items-center justify-center" style={{ opacity: exitOpacity, scale: exitScale, filter: exitBlur }}>
-          <motion.div
-            className="pointer-events-none absolute"
-            initial={{ opacity: 0, scale: 0.4 }}
-            animate={n === 0 ? { opacity: 1, scale: 1, filter: 'blur(0px)' } : { opacity: [1, 1, 0], y: -ringSize * 1.6, scale: 0.6, filter: ['blur(0px)', 'blur(0px)', 'blur(8px)'] }}
-            transition={n === 0 ? { duration: 1.2, ease: [0.2, 0.7, 0.2, 1] } : { duration: 0.8, ease: [0.5, 0, 0.2, 1], opacity: { duration: 0.8, times: [0, 0.45, 1] }, filter: { duration: 0.8, times: [0, 0.45, 1] } }}
-            style={{ width: ringSize, height: ringSize }}
-          >
-            <NeonRing size="100%" />
-          </motion.div>
+      <div className="sticky top-0 flex h-svh items-center overflow-hidden">
+        {/* The loader ring sits in the middle of the screen. */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 grid place-items-center">
+            <motion.div
+              className="pointer-events-none"
+              initial={{ opacity: 0, scale: 0.4 }}
+              animate={n === 0 ? { opacity: 1, scale: 1, filter: 'blur(0px)' } : { opacity: [1, 1, 0], y: -ringSize * 1.6, scale: 0.6, filter: ['blur(0px)', 'blur(0px)', 'blur(8px)'] }}
+              transition={n === 0 ? { duration: 1.2, ease: [0.2, 0.7, 0.2, 1] } : { duration: 0.8, ease: [0.5, 0, 0.2, 1], opacity: { duration: 0.8, times: [0, 0.45, 1] }, filter: { duration: 0.8, times: [0, 0.45, 1] } }}
+              style={{ width: ringSize, height: ringSize }}
+            >
+              <NeonRing size="100%" />
+            </motion.div>
+        </div>
 
+        {/* Same container as the navbar and work section; lines centred in it. */}
+        <motion.div aria-hidden className="mx-auto w-full max-w-[1560px] origin-center px-5 md:px-8 xl:px-12" style={{ opacity: exitOpacity, scale: exitScale, filter: exitBlur }}>
           <p className={TEXT_CLASS}>{renderUnits(units, n, <span className={cn('caret absolute -top-[0.8em] left-[0.05em] h-[0.95em] w-[2px] rounded-full bg-accent', done && 'opacity-80')} />)}</p>
         </motion.div>
 
