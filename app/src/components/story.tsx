@@ -2,6 +2,7 @@ import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type R
 import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { STORY, type StoryStyle } from '@/data'
 import { cn } from '@/lib/utils'
+import { keyClick } from '@/lib/typing-sound'
 import { NeonRing } from './neon-ring'
 
 // ── Flatten the story into typed units ───────────────────────────────────────────────
@@ -148,6 +149,7 @@ export function Story() {
           holdUntil = now + (pauseAt[next] ?? SMALL_PAUSE[ch] ?? 0)
           acc = next // start the next letter cleanly after a pause
         }
+        keyClick(ch === ' ' ? 'space' : ch === '\n' ? 'enter' : 'char')
         nRef.current = next
         setN(next)
       }

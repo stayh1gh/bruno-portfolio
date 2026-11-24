@@ -1,5 +1,7 @@
-// Quiet background music. Browsers only allow audio after a click or key press, so it
-// starts on the first interaction and follows the Sound on/off toggle.
+// Quiet background music that starts once the visitor reaches the work section.
+// Browsers only allow audio after a click, tap or key press (scrolling doesn't count),
+// so it plays when both are true: the visitor has interacted at least once, and the
+// work section has come into view. It follows the Sound on/off toggle.
 // The track file (public/audio/background.mp3) is kept out of git; without it this is silent.
 import { onSoundChange, soundEnabled } from './sound-pref'
 
@@ -8,7 +10,8 @@ const VOLUME = 0.12 // quiet, in the background
 
 let audio: HTMLAudioElement | null = null
 let fade = 0
-let started = false
+let unlocked = false // the visitor has clicked / tapped / pressed a key
+let reached = false // the work section has been on screen
 
 function fadeTo(target: number, ms: number, then?: () => void) {
   if (!audio) return
@@ -26,6 +29,7 @@ function fadeTo(target: number, ms: number, then?: () => void) {
 }
 
 function play() {
+  if (!unlocked || !reached || !soundEnabled() || document.hidden) return
   if (!audio) {
     audio = new Audio(SRC)
     audio.loop = true
@@ -42,14 +46,34 @@ function pause() {
   fadeTo(0, 600, () => audio?.pause())
 }
 
-/** Call from a user gesture (click / key). */
-export function startMusic() {
-  if (started) return
-  started = true
-  if (soundEnabled()) play()
-  onSoundChange((on) => (on ? play() : pause()))
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) pause()
-    else if (soundEnabled()) play()
-  })
+/** Call from a user gesture (click / key): audio is allowed from now on. */
+export function unlockMusic() {
+  unlocked = true
+  play()
+}
+
+/** Wire up the triggers once: the work section coming into view, the toggle, tab visibility. */
+export function setupMusic() {
+  const work = document.getElementById('work')
+  let io: IntersectionObserver | undefined
+  if (work) {
+    io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return
+        reached = true
+        play()
+        io?.disconnect()
+      },
+      { threshold: 0.15 },
+    )
+    io.observe(work)
+  }
+  const offToggle = onSoundChange((on) => (on ? play() : pause()))
+  const onVis = () => (document.hidden ? pause() : play())
+  document.addEventListener('visibilitychange', onVis)
+  return () => {
+    io?.disconnect()
+    offToggle()
+    document.removeEventListener('visibilitychange', onVis)
+  }
 }
