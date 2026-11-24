@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode, type RefObject } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { X } from 'lucide-react'
 import { TextRoll } from './fx/text-roll'
+import { pauseSmoothScroll } from '@/lib/smooth-scroll'
 
 type Props = {
   open: boolean
@@ -23,11 +24,13 @@ export function Overlay({ open, label, onClose, children }: Props) {
     const opener = document.activeElement as HTMLElement | null
     const html = document.documentElement
     html.style.overflow = 'hidden'
+    pauseSmoothScroll(true)
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
     const t = setTimeout(() => closeRef.current?.focus({ preventScroll: true }), 50)
     return () => {
       html.style.overflow = ''
+      pauseSmoothScroll(false)
       window.removeEventListener('keydown', onKey)
       clearTimeout(t)
       opener?.focus?.({ preventScroll: true })
@@ -47,6 +50,7 @@ export function Overlay({ open, label, onClose, children }: Props) {
           />
           <motion.div
             ref={scrollRef}
+            data-lenis-prevent
             className="absolute inset-0 overflow-y-auto overscroll-contain pb-24 pt-[104px] [mask-image:linear-gradient(to_bottom,transparent_0,transparent_64px,black_120px)] md:pt-[128px] md:[mask-image:linear-gradient(to_bottom,transparent_0,transparent_76px,black_132px)]"
             onClick={(e) => e.target === e.currentTarget && onClose()}
             initial={{ opacity: 0, y: 48, filter: 'blur(8px)' }}

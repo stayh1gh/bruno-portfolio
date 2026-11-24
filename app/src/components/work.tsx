@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, LayoutGroup, motion, useInView } from 'motion/react'
+import { AnimatePresence, LayoutGroup, motion, useInView, useScroll, useTransform } from 'motion/react'
 import { FILTERS, PROJECTS, type Media, type Project } from '@/data'
 import { cn } from '@/lib/utils'
 import { Badge } from './ui/badge'
@@ -68,43 +68,55 @@ export function Work() {
 
 function ProjectCard({ project, index }: { project: Project; index: number }) {
   const Wrapper = project.href ? 'a' : 'div'
+  // Scroll-linked, like kenjilambert.com: the card grows from 88% as it comes up, its
+  // image keeps zooming slowly while it passes, and the text rises in a beat later.
+  const ref = useRef<HTMLLIElement>(null)
+  const { scrollYProgress: p } = useScroll({ target: ref, offset: ['start end', 'end start'] })
+  const lag = (index % 3) * 0.03 // columns arrive one after another
+  const scale = useTransform(p, [0, 0.4 + lag], [0.88, 1])
+  const opacity = useTransform(p, [0, 0.22 + lag], [0, 1])
+  const zoom = useTransform(p, [0, 1], [1, 1.12])
+  const textY = useTransform(p, [0.1 + lag, 0.42 + lag], [26, 0])
+  const textOpacity = useTransform(p, [0.1 + lag, 0.42 + lag], [0, 1])
+
   return (
     <motion.li
+      ref={ref}
       layout
-      initial={{ opacity: 0, y: 40, filter: 'blur(10px)' }}
-      whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
       exit={{ opacity: 0, scale: 0.94, filter: 'blur(6px)', transition: { duration: 0.25 } }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{
-        layout: { type: 'spring', stiffness: 260, damping: 30 },
-        default: { duration: 0.8, delay: (index % 3) * 0.09, ease: [0.2, 0.7, 0.2, 1] },
-      }}
+      transition={{ layout: { type: 'spring', stiffness: 260, damping: 30 } }}
     >
-      <Wrapper
-        {...(project.href ? { href: project.href } : {})}
-        className="group/card group/roll block rounded-[20px] border border-line bg-card p-2 outline-none transition-[border-color,transform] duration-500 hover:-translate-y-1 hover:border-fg/15 focus-visible:ring-2 focus-visible:ring-accent-2/60"
-      >
-        <div className="relative aspect-[4/3] overflow-hidden rounded-[14px] bg-bg">
-          <CardMedia media={project.media} label={project.client} />
-          <div className="pointer-events-none absolute inset-0 rounded-[14px] ring-1 ring-inset ring-white/5" />
-        </div>
-        <div className="flex items-start justify-between gap-4 px-2 pb-2 pt-4">
-          <div>
-            <p className="text-[15px] font-medium leading-snug tracking-[-0.01em] text-fg">{project.line}</p>
-            <p className="mt-1 text-[13px] text-subtle">{project.client}</p>
+      <motion.div style={{ scale, opacity }} className="origin-bottom">
+        <Wrapper
+          {...(project.href ? { href: project.href } : {})}
+          className="group/card group/roll block rounded-[20px] border border-line bg-card p-2 outline-none transition-[border-color,transform] duration-500 hover:-translate-y-1 hover:border-fg/15 focus-visible:ring-2 focus-visible:ring-accent-2/60"
+        >
+          <div className="relative aspect-[4/3] overflow-hidden rounded-[14px] bg-bg">
+            <motion.div className="size-full" style={{ scale: zoom }}>
+              <CardMedia media={project.media} label={project.client} />
+            </motion.div>
+            <div className="pointer-events-none absolute inset-0 rounded-[14px] ring-1 ring-inset ring-white/5" />
           </div>
-          {project.href && (
-            <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line text-muted transition-colors duration-300 group-hover/card:border-accent-2/40 group-hover/card:bg-accent-2/10 group-hover/card:text-accent-2">
-              <ArrowSwap />
-            </span>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-1.5 px-2 pb-2 pt-1">
-          {project.tags.map((t) => (
-            <Badge key={t}>{t}</Badge>
-          ))}
-        </div>
-      </Wrapper>
+          <motion.div style={{ y: textY, opacity: textOpacity }}>
+            <div className="flex items-start justify-between gap-4 px-2 pb-2 pt-4">
+              <div>
+                <p className="text-[15px] font-medium leading-snug tracking-[-0.01em] text-fg">{project.line}</p>
+                <p className="mt-1 text-[13px] text-subtle">{project.client}</p>
+              </div>
+              {project.href && (
+                <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line text-muted transition-colors duration-300 group-hover/card:border-accent-2/40 group-hover/card:bg-accent-2/10 group-hover/card:text-accent-2">
+                  <ArrowSwap />
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-1.5 px-2 pb-2 pt-1">
+              {project.tags.map((t) => (
+                <Badge key={t}>{t}</Badge>
+              ))}
+            </div>
+          </motion.div>
+        </Wrapper>
+      </motion.div>
     </motion.li>
   )
 }
