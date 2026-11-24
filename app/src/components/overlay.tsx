@@ -58,7 +58,7 @@ export function Overlay({ open, label, onClose, children }: Props) {
             exit={{ opacity: 0, y: 24, filter: 'blur(6px)', transition: { duration: 0.3 } }}
             transition={{ type: 'spring', stiffness: 120, damping: 22 }}
           >
-            <div className="mx-auto w-full max-w-[1248px] px-5 md:px-8 xl:px-0" onClick={(e) => e.target === e.currentTarget && onClose()}>
+            <div className="mx-auto w-full max-w-[1560px] px-5 md:px-8 xl:px-12" onClick={(e) => e.target === e.currentTarget && onClose()}>
               <div className="flex justify-end">
                 <button
                   ref={closeRef}
