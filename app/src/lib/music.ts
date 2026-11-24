@@ -7,6 +7,7 @@ import { onSoundChange, soundEnabled } from './sound-pref'
 
 const SRC = '/audio/background.mp3'
 const VOLUME = 0.12 // quiet, in the background
+const START = 23 // seconds into the track
 
 let audio: HTMLAudioElement | null = null
 let fade = 0
@@ -31,10 +32,15 @@ function fadeTo(target: number, ms: number, then?: () => void) {
 function play() {
   if (!unlocked || !reached || !soundEnabled() || document.hidden) return
   if (!audio) {
-    audio = new Audio(SRC)
-    audio.loop = true
-    audio.volume = 0
-    audio.addEventListener('error', () => (audio = null), { once: true })
+    // Starts at 0:23, and loops back to 0:23 rather than the beginning.
+    const a = new Audio(`${SRC}#t=${START}`)
+    a.volume = 0
+    a.addEventListener('ended', () => {
+      a.currentTime = START
+      void a.play().catch(() => {})
+    })
+    a.addEventListener('error', () => (audio = null), { once: true })
+    audio = a
   }
   audio
     .play()
