@@ -31,7 +31,7 @@ export function ChompVisual() {
               animate={{ scale: i === at && step < STEPS.length ? 1.08 : 1 }}
               transition={{ type: 'spring', stiffness: 300, damping: 18 }}
               className={cn(
-                'rounded-full border px-3 py-1.5 font-mono text-[11px] transition-colors duration-500',
+                'rounded-full border px-3 py-1.5 font-mono text-[12px] transition-colors duration-500',
                 i <= at && step < STEPS.length ? 'border-accent-2/50 bg-accent-2/15 text-accent-2' : 'border-line text-subtle',
               )}
             >
@@ -49,7 +49,7 @@ export function ChompVisual() {
           </div>
         ))}
       </div>
-      <p className="relative font-mono text-[10px] uppercase tracking-[0.2em] text-subtle">
+      <p className="relative font-mono text-[11px] uppercase tracking-[0.2em] text-subtle">
         {step >= STEPS.length - 1 ? 'draft PR opened' : 'agent working…'}
       </p>
     </div>

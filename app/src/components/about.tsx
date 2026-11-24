@@ -10,7 +10,7 @@ export function About({ scrollRef }: { scrollRef: RefObject<HTMLDivElement | nul
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.6, ease: [0.2, 0.7, 0.2, 1] }}
-        className="text-[40px] font-medium leading-none tracking-[-0.035em] md:text-[56px]"
+        className="text-[46px] font-medium leading-none tracking-[-0.035em] md:text-[64px]"
       >
         About <span className="font-serif italic font-normal tracking-normal text-accent-2">me</span>
       </motion.h2>
@@ -18,7 +18,7 @@ export function About({ scrollRef }: { scrollRef: RefObject<HTMLDivElement | nul
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.18, duration: 0.6, ease: [0.2, 0.7, 0.2, 1] }}
-        className="mt-6 max-w-[780px] text-xl leading-snug tracking-[-0.015em] text-fg/90 md:text-[26px]"
+        className="mt-6 max-w-[780px] text-2xl leading-snug tracking-[-0.015em] text-fg/90 md:text-[30px]"
       >
         Product Designer with more than 8 years of experience designing digital products end to end. I excel at building and
         maintaining <span className="font-serif italic text-accent">Design Systems</span> and creating meaningful experiences.
@@ -27,7 +27,7 @@ export function About({ scrollRef }: { scrollRef: RefObject<HTMLDivElement | nul
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="mt-16 font-mono text-[11px] uppercase tracking-[0.22em] text-subtle md:mt-20"
+        className="mt-16 font-mono text-[12px] uppercase tracking-[0.22em] text-subtle md:mt-20"
       >
         Work experience
       </motion.h3>
@@ -76,14 +76,14 @@ function TimelineItem({ job, index, on, current }: { job: Job; index: number; on
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
         <div className="flex items-center gap-4">
           <Logo job={job} />
-          <span className="text-xl font-medium tracking-[-0.02em] md:text-[22px]">{job.company}</span>
+          <span className="text-2xl font-medium tracking-[-0.02em] md:text-[25px]">{job.company}</span>
         </div>
-        <span className="text-base tabular-nums text-muted md:text-xl">{job.period}</span>
+        <span className="text-lg tabular-nums text-muted md:text-2xl">{job.period}</span>
       </div>
-      <p className="mt-3 text-sm text-fg md:ml-12">
+      <p className="mt-3 text-base text-fg md:ml-12">
         {job.role} · {job.location}
       </p>
-      {job.summary && <p className="mt-3 max-w-[560px] text-[15px] leading-relaxed text-muted md:ml-12">{job.summary}</p>}
+      {job.summary && <p className="mt-3 max-w-[560px] text-[17px] leading-relaxed text-muted md:ml-12">{job.summary}</p>}
     </motion.li>
   )
 }

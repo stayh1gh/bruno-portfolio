@@ -28,7 +28,7 @@ export function SoundToggle() {
       onClick={() => setSoundEnabled(!on)}
       aria-pressed={on}
       aria-label={on ? 'Turn typing sound off' : 'Turn typing sound on'}
-      className="group/roll fixed bottom-4 left-4 z-50 flex h-8 items-center gap-2 rounded-full border border-line bg-bg/80 px-3 text-[11px] text-subtle backdrop-blur-md outline-none transition-colors hover:text-fg focus-visible:ring-2 focus-visible:ring-accent-2/60"
+      className="group/roll fixed bottom-4 left-4 z-50 flex h-8 items-center gap-2 rounded-full border border-line bg-bg/80 px-3 text-[12px] text-subtle backdrop-blur-md outline-none transition-colors hover:text-fg focus-visible:ring-2 focus-visible:ring-accent-2/60"
     >
       <span aria-hidden className="flex h-3 items-end gap-[2px]">
         {[0, 1, 2, 3].map((i) => (

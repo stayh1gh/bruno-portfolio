@@ -19,9 +19,9 @@ const buttonVariants = cva(
         ghost: 'text-muted hover:text-fg',
       },
       size: {
-        sm: 'h-8 px-3.5 text-[13px]',
-        md: 'h-9 px-4 text-sm',
-        lg: 'h-11 px-5 text-[15px]',
+        sm: 'h-8 px-3.5 text-[15px]',
+        md: 'h-9 px-4 text-base',
+        lg: 'h-11 px-5 text-[17px]',
         icon: 'size-8 rounded-lg',
       },
     },

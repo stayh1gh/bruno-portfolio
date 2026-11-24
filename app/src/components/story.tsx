@@ -61,8 +61,8 @@ const SMALL_PAUSE = { ',': 110, ' ': 20, '\n': 140 } as Record<string, number>
 
 const TEXT_CLASS = cn(
   'text-center font-sans font-medium text-fg [text-wrap:balance]',
-  'max-w-[340px] text-[27px] leading-[1.25] tracking-[-0.02em]',
-  'md:w-max md:max-w-none md:text-[clamp(34px,3.3vw,60px)] md:leading-[1.22] md:tracking-[-0.03em]',
+  'max-w-[340px] text-[30px] leading-[1.25] tracking-[-0.02em]',
+  'md:w-max md:max-w-none md:text-[clamp(38px,3.8vw,68px)] md:leading-[1.22] md:tracking-[-0.03em]',
 )
 
 function renderUnits(units: Unit[], limit: number, caret: ReactNode): ReactNode[] {
@@ -207,7 +207,7 @@ function ScrollCue({ done, progress }: { done: boolean; progress: number }) {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '-100%', opacity: 0 }}
             transition={{ duration: 0.45, ease: [0.7, 0, 0.2, 1] }}
-            className="block font-mono text-[10px] uppercase tracking-[0.22em] text-subtle"
+            className="block font-mono text-[11px] uppercase tracking-[0.22em] text-subtle"
           >
             {done ? 'Scroll to see the work' : 'Scroll to fast-forward'}
           </motion.span>

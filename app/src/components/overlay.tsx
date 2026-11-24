@@ -63,11 +63,11 @@ export function Overlay({ open, label, onClose, children }: Props) {
                 <button
                   ref={closeRef}
                   onClick={onClose}
-                  className="group/roll inline-flex h-8 items-center gap-2 rounded-full border border-line px-3 text-[13px] text-muted outline-none transition-colors hover:border-fg/25 hover:text-fg focus-visible:ring-2 focus-visible:ring-accent-2/60"
+                  className="group/roll inline-flex h-8 items-center gap-2 rounded-full border border-line px-3 text-[15px] text-muted outline-none transition-colors hover:border-fg/25 hover:text-fg focus-visible:ring-2 focus-visible:ring-accent-2/60"
                 >
                   <X className="size-3.5 transition-transform duration-500 group-hover/roll:rotate-90" />
                   <TextRoll>Close</TextRoll>
-                  <kbd className="ml-1 hidden rounded border border-line px-1 font-mono text-[10px] text-subtle md:inline">esc</kbd>
+                  <kbd className="ml-1 hidden rounded border border-line px-1 font-mono text-[11px] text-subtle md:inline">esc</kbd>
                 </button>
               </div>
               {children(scrollRef)}

@@ -22,7 +22,7 @@ export function Footer() {
       <motion.h2
         {...rise}
         transition={{ duration: 0.8, delay: 0.1 }}
-        className="mt-8 text-[36px] font-medium leading-[1.05] tracking-[-0.035em] md:text-[48px]"
+        className="mt-8 text-[41px] font-medium leading-[1.05] tracking-[-0.035em] md:text-[55px]"
       >
         Want to build something?
         <br />
@@ -53,7 +53,7 @@ export function Footer() {
           </a>
         </Button>
       </motion.div>
-      <p className="mt-16 font-mono text-[10px] uppercase tracking-[0.22em] text-subtle">© 2026 Bruno Paradas</p>
+      <p className="mt-16 font-mono text-[11px] uppercase tracking-[0.22em] text-subtle">© 2026 Bruno Paradas</p>
     </footer>
   )
 }

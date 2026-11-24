@@ -8,7 +8,7 @@ export function OtherWork() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.6, ease: [0.2, 0.7, 0.2, 1] }}
-        className="text-[40px] font-medium leading-none tracking-[-0.035em] md:text-[56px]"
+        className="text-[46px] font-medium leading-none tracking-[-0.035em] md:text-[64px]"
       >
         Other <span className="font-serif italic font-normal tracking-normal text-accent-2">work</span>
       </motion.h2>
@@ -16,7 +16,7 @@ export function OtherWork() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.18, duration: 0.6 }}
-        className="mt-5 max-w-[560px] text-lg text-muted"
+        className="mt-5 max-w-[560px] text-xl text-muted"
       >
         Smaller projects, explorations and screens that didn’t get a card.
       </motion.p>
@@ -37,7 +37,7 @@ export function OtherWork() {
                 className="w-full transition-transform duration-[1.2s] ease-[cubic-bezier(.2,.7,.2,1)] group-hover/fig:scale-[1.035]"
               />
             </div>
-            <figcaption className="mt-3 text-sm text-muted transition-colors group-hover/fig:text-fg">{w.title}</figcaption>
+            <figcaption className="mt-3 text-base text-muted transition-colors group-hover/fig:text-fg">{w.title}</figcaption>
           </motion.figure>
         ))}
       </div>

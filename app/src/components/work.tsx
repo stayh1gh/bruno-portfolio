@@ -20,7 +20,7 @@ export function Work() {
           whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.7, ease: [0.2, 0.7, 0.2, 1] }}
-          className="text-[40px] font-medium leading-none tracking-[-0.035em] md:text-[56px]"
+          className="text-[46px] font-medium leading-none tracking-[-0.035em] md:text-[64px]"
         >
           What I’ve <span className="font-serif italic font-normal tracking-normal text-accent-2">built</span>
         </motion.h2>
@@ -35,7 +35,7 @@ export function Work() {
                   aria-selected={on}
                   onClick={() => setFilter(f)}
                   className={cn(
-                    'relative h-8 rounded-full px-3.5 text-[13px] outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-accent-2/60',
+                    'relative h-8 rounded-full px-3.5 text-[15px] outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-accent-2/60',
                     on ? 'text-bg' : 'text-muted hover:text-fg',
                   )}
                 >
@@ -100,8 +100,8 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           <motion.div style={{ y: textY, opacity: textOpacity }}>
             <div className="flex items-start justify-between gap-4 px-2 pb-2 pt-4">
               <div>
-                <p className="text-[15px] font-medium leading-snug tracking-[-0.01em] text-fg">{project.line}</p>
-                <p className="mt-1 text-[13px] text-subtle">{project.client}</p>
+                <p className="text-[17px] font-medium leading-snug tracking-[-0.01em] text-fg">{project.line}</p>
+                <p className="mt-1 text-[15px] text-subtle">{project.client}</p>
               </div>
               {project.href && (
                 <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line text-muted transition-colors duration-300 group-hover/card:border-accent-2/40 group-hover/card:bg-accent-2/10 group-hover/card:text-accent-2">

@@ -18,7 +18,7 @@ export function Nav({ panel, setPanel }: { panel: Panel; setPanel: (p: Panel) =>
       onClick={onClick}
       aria-pressed={on}
       className={cn(
-        'group/roll relative h-9 rounded-full px-2.5 text-[13px] outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-accent-2/60 md:px-4 md:text-sm',
+        'group/roll relative h-9 rounded-full px-2.5 text-[15px] outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-accent-2/60 md:px-4 md:text-base',
         on ? 'text-fg' : 'text-muted hover:text-fg',
         className,
       )}
@@ -52,7 +52,7 @@ export function Nav({ panel, setPanel }: { panel: Panel; setPanel: (p: Panel) =>
         <a
           href="#top"
           onClick={() => setPanel(null)}
-          className="group/roll rounded text-lg font-medium tracking-[-0.03em] outline-none focus-visible:ring-2 focus-visible:ring-accent-2/60 md:text-xl"
+          className="group/roll rounded text-xl font-medium tracking-[-0.03em] outline-none focus-visible:ring-2 focus-visible:ring-accent-2/60 md:text-2xl"
         >
           <TextRoll>bruno.</TextRoll>
         </a>
