@@ -90,6 +90,8 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         <Wrapper
           {...(project.href ? { href: project.href } : {})}
           aria-label={`${project.line} — ${project.client}`}
+          data-cursor="view"
+          data-cursor-label={project.href ? 'View' : 'Soon'}
           className="group/card flex flex-col gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-accent-2/60"
         >
           <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-line bg-card">

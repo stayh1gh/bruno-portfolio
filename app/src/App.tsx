@@ -8,6 +8,7 @@ import { Overlay } from './components/overlay'
 import { About } from './components/about'
 import { OtherWork } from './components/other-work'
 import { SoundToggle } from './components/sound-toggle'
+import { Cursor } from './components/cursor'
 import { startSmoothScroll } from './lib/smooth-scroll'
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
         {(scrollRef) => (panel === 'other' ? <OtherWork /> : <About scrollRef={scrollRef} />)}
       </Overlay>
       <SoundToggle />
+      <Cursor />
     </MotionConfig>
   )
 }

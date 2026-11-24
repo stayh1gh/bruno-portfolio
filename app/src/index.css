@@ -104,3 +104,9 @@ body {
   white-space: pre;
   opacity: 0;
 }
+
+/* Custom cursor (components/cursor.tsx): hide the system pointer on mouse/trackpad devices. */
+html.custom-cursor,
+html.custom-cursor * {
+  cursor: none !important;
+}
