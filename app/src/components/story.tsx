@@ -42,9 +42,10 @@ const STYLE: Record<StoryStyle, string> = {
   c: 'text-accent-2',
 }
 
-const BASE_CPS = 26 // characters per second when nobody scrolls
-const START_DELAY = 1500 // ms of "listening" before the first letter
-const MAX_SCALE = 3 // camera zoom at the first letter
+const LOADER_MS = 1800 // the ring alone, before the first letter
+const INTRO_CPS = 15 // "Hi, I’m Bruno Paradas,"
+const STORY_CPS = 11 // everything after it: slow, like someone talking
+const INTRO_END = 'Hi, I’m Bruno Paradas,'.length
 
 export function Story() {
   const reduce = useReducedMotion()
@@ -59,7 +60,10 @@ export function Story() {
   const nRef = useRef(0)
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ['start start', 'end end'] })
 
-  // ── Typing: time drives it, scrolling fast-forwards it ──────────────────────────────
+  // ── Typing, paced like someone telling a story ──────────────────────────────────────
+  // 1. The ring loads alone for a moment. 2. "Hi, I’m Bruno Paradas," is typed.
+  // 3. A breath, then every other line arrives slowly, pausing at commas, full stops
+  //    and line ends. Scrolling is the only thing that speeds it up.
   useEffect(() => {
     if (reduce) {
       nRef.current = total
@@ -69,22 +73,28 @@ export function Story() {
     const chars = units.flatMap((u) => (u.kind === 'word' ? u.chars.map((c) => c.ch) : [u.kind === 'br' ? '\n' : ' ']))
     let raf = 0
     let last = performance.now()
-    const startAt = last + START_DELAY
-    let holdUntil = 0
+    let holdUntil = last + LOADER_MS
     let acc = nRef.current
+    let jitter = 1
     const tick = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000)
       last = now
       const scrollTarget = Math.min(1, scrollYProgress.get() / 0.62) * total
       const forced = scrollTarget > acc + 0.5
-      let speed = now < startAt || now < holdUntil ? 0 : BASE_CPS
-      if (forced) speed = Math.max(speed, (scrollTarget - acc) * 7, 70)
+      const cps = acc < INTRO_END ? INTRO_CPS : STORY_CPS
+      let speed = now < holdUntil ? 0 : cps * jitter
+      if (forced) speed = Math.max(speed, (scrollTarget - acc) * 5, 45)
       const prev = Math.floor(acc)
       acc = Math.min(total, acc + speed * dt)
       const next = Math.floor(acc)
       if (next !== prev) {
         const ch = chars[next - 1]
-        if (!forced) holdUntil = now + (ch === '.' ? 380 : ch === ',' ? 160 : ch === '\n' ? 220 : 0)
+        jitter = 0.7 + Math.random() * 0.6
+        if (!forced) {
+          let pause = ch === '.' ? 1100 : ch === ',' ? 420 : ch === '\n' ? 700 : ch === ' ' ? 40 + Math.random() * 90 : 0
+          if (next === INTRO_END) pause = 1300
+          holdUntil = now + pause
+        }
         nRef.current = next
         setN(next)
       }
@@ -94,53 +104,38 @@ export function Story() {
     return () => cancelAnimationFrame(raf)
   }, [reduce, scrollYProgress, total, units])
 
-  // The ring pulses every time a word lands.
+  // The ring pulses softly every time a word lands.
   const wordsDone = useRef(0)
   useEffect(() => {
     let k = 0
     while (k < wordEnds.length && wordEnds[k] <= n) k++
-    if (k > wordsDone.current) ringRef.current?.pulse(Math.min(2, k - wordsDone.current))
+    if (k > wordsDone.current) ringRef.current?.pulse(Math.min(1.2, (k - wordsDone.current) * 0.6))
     wordsDone.current = k
   }, [n, wordEnds])
 
-  // ── Camera: zoomed in on the first letter, pulls back as the paragraph grows ────────
-  const [vp, setVp] = useState({ w: 1440, h: 900 })
+  const [mobile, setMobile] = useState(false)
   useLayoutEffect(() => {
-    const on = () => setVp({ w: window.innerWidth, h: window.innerHeight })
+    const on = () => setMobile(window.innerWidth < 768)
     on()
     window.addEventListener('resize', on)
     return () => window.removeEventListener('resize', on)
   }, [])
-  const [box, setBox] = useState({ w: 0, h: 0 })
   const boxH = useMotionValue(0)
   useLayoutEffect(() => {
     const el = blockRef.current
     if (!el) return
-    const ro = new ResizeObserver(() => {
-      setBox({ w: el.offsetWidth, h: el.offsetHeight })
-      boxH.set(nRef.current === 0 ? 0 : el.offsetHeight)
-    })
+    const ro = new ResizeObserver(() => boxH.set(nRef.current === 0 ? 0 : el.offsetHeight))
     ro.observe(el)
     return () => ro.disconnect()
   }, [boxH])
 
-  const mobile = vp.w < 768
-  const fitW = vp.w * (mobile ? 0.88 : 0.64)
-  const fitH = vp.h * (mobile ? 0.56 : 0.5)
-  const target = box.w && box.h && n > 0 ? Math.min(MAX_SCALE, fitW / box.w, fitH / box.h) : MAX_SCALE
-  const scale = useSpring(MAX_SCALE, { stiffness: 110, damping: 24, mass: 1 })
-  useEffect(() => {
-    if (reduce) scale.jump(target)
-    else scale.set(target)
-  }, [target, reduce, scale])
-
-  // Ring: alone in the centre while "listening", then floats above the text and shrinks.
-  const ringSize = n === 0 ? (mobile ? 104 : 128) : mobile ? 64 : Math.round(92 - 28 * (n / total))
+  // Ring: the loader, alone in the centre; once the story starts it floats above the text.
+  const ringSize = n === 0 ? (mobile ? 96 : 120) : mobile ? 48 : 56
   const ringYRaw = useTransform(() => {
     const h = boxH.get()
-    return h === 0 ? 0 : -(h * scale.get()) / 2 - (mobile ? 28 : 40) - ringSize / 2
+    return h === 0 ? 0 : -h / 2 - (mobile ? 24 : 32) - ringSize / 2
   })
-  const ringY = useSpring(ringYRaw, { stiffness: 90, damping: 20 })
+  const ringY = useSpring(ringYRaw, { stiffness: 60, damping: 18 })
 
   // Leaving: the story dims and recedes as the work section comes up.
   const exitOpacity = useTransform(scrollYProgress, [0.82, 1], [1, 0.35])
@@ -164,11 +159,12 @@ export function Story() {
 
           <motion.p
             ref={blockRef}
-            style={{ scale }}
+            layout="position"
+            transition={{ layout: { type: 'spring', stiffness: 70, damping: 20 } }}
             className={cn(
               'text-center font-sans font-medium text-fg [text-wrap:balance]',
-              'max-w-[330px] text-[26px] leading-[1.28] tracking-[-0.02em]',
-              'md:w-max md:max-w-none md:text-[46px] md:leading-[1.36] md:tracking-[-0.025em]',
+              'max-w-[320px] text-[21px] leading-[1.42] tracking-[-0.015em]',
+              'md:w-max md:max-w-none md:text-[30px] md:leading-[1.42] md:tracking-[-0.02em]',
             )}
           >
             {units.map((u, k) => {
