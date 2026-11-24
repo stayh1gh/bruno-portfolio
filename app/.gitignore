@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Background music: a copyrighted track, kept local only (not committed)
+public/audio/background.mp3

@@ -2,16 +2,20 @@ import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import { onSoundChange, setSoundEnabled, soundEnabled, unlockAudio } from '@/lib/typing-sound'
 import { cn } from '@/lib/utils'
+import { startMusic } from '@/lib/music'
 
 /**
- * Corner toggle for the typing sound. Browsers only play audio after a click or key press,
+ * Corner toggle for sound: typing clicks and the background music. Browsers only play audio after a click or key press,
  * so the first interaction anywhere on the page unlocks it.
  */
 export function SoundToggle() {
   const [on, setOn] = useState(soundEnabled)
   useEffect(() => onSoundChange(setOn), [])
   useEffect(() => {
-    const unlock = () => unlockAudio()
+    const unlock = () => {
+      unlockAudio()
+      startMusic()
+    }
     window.addEventListener('pointerdown', unlock, { once: true })
     window.addEventListener('keydown', unlock, { once: true })
     return () => {
