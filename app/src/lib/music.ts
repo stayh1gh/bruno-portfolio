@@ -6,7 +6,7 @@
 import { onSoundChange, soundEnabled } from './sound-pref'
 
 const SRC = '/audio/background.mp3'
-const VOLUME = 0.12 // quiet, in the background
+const VOLUME = 0.08 // quiet, in the background
 const START = 23 // seconds into the track
 
 let audio: HTMLAudioElement | null = null
