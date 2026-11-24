@@ -8,7 +8,7 @@ let lenis: Lenis | null = null
 
 export function startSmoothScroll() {
   if (lenis || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return () => {}
-  lenis = new Lenis({ autoRaf: true, lerp: 0.09, anchors: true })
+  lenis = new Lenis({ autoRaf: true, lerp: 0.12, anchors: true })
   return () => {
     lenis?.destroy()
     lenis = null

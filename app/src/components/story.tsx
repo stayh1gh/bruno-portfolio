@@ -136,7 +136,7 @@ export function Story() {
     const tick = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000)
       last = now
-      const scrollTarget = Math.min(1, scrollYProgress.get() / 0.62) * total
+      const scrollTarget = Math.min(1, scrollYProgress.get() / 0.45) * total
       const forced = scrollTarget > acc + 0.5
       let speed = now < holdUntil ? 0 : CPS
       if (forced) speed = Math.max(speed, (scrollTarget - acc) * 5, 45)
@@ -164,14 +164,14 @@ export function Story() {
   const ringSize = mobile ? 96 : 120
 
   // Leaving: the story dims and recedes as the work section comes up.
-  const exitOpacity = useTransform(scrollYProgress, [0.82, 1], [1, 0.35])
-  const exitScale = useTransform(scrollYProgress, [0.82, 1], [1, 0.94])
-  const exitBlur = useTransform(scrollYProgress, [0.82, 1], ['blur(0px)', 'blur(4px)'])
+  const exitOpacity = useTransform(scrollYProgress, [0.6, 1], [1, 0.35])
+  const exitScale = useTransform(scrollYProgress, [0.6, 1], [1, 0.94])
+  const exitBlur = useTransform(scrollYProgress, [0.6, 1], ['blur(0px)', 'blur(4px)'])
 
   const done = n >= total
 
   return (
-    <section ref={containerRef} aria-label="Intro" className="relative h-[230svh]">
+    <section ref={containerRef} aria-label="Intro" className="relative h-[150svh]">
       <p className="sr-only">{STORY.map((s) => ('br' in s ? ' ' : 't' in s ? s.t : '')).join('')}</p>
 
       <div className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
