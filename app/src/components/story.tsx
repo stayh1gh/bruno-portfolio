@@ -56,8 +56,8 @@ const STYLE: Record<StoryStyle, string> = {
 // copy itself ({ pause } in data.ts). The text is laid out at its final size and place
 // from the start, so typing never moves it.
 const LOADER_MS = 1600
-const CPS = 14 // letters per second
-const SMALL_PAUSE = { ',': 140, ' ': 35, '\n': 160 } as Record<string, number>
+const CPS = 24 // letters per second
+const SMALL_PAUSE = { ',': 110, ' ': 20, '\n': 140 } as Record<string, number>
 
 const TEXT_CLASS = cn(
   'text-center font-sans font-medium text-fg [text-wrap:balance]',
@@ -179,8 +179,8 @@ export function Story() {
           <motion.div
             className="pointer-events-none absolute"
             initial={{ opacity: 0, scale: 0.4 }}
-            animate={n === 0 ? { opacity: 1, scale: 1, filter: 'blur(0px)' } : { opacity: 0, scale: 0.7, filter: 'blur(10px)' }}
-            transition={n === 0 ? { duration: 1.2, ease: [0.2, 0.7, 0.2, 1] } : { duration: 0.9, ease: [0.4, 0, 0.2, 1] }}
+            animate={n === 0 ? { opacity: 1, scale: 1, filter: 'blur(0px)' } : { opacity: [1, 1, 0], y: -ringSize * 1.6, scale: 0.6, filter: ['blur(0px)', 'blur(0px)', 'blur(8px)'] }}
+            transition={n === 0 ? { duration: 1.2, ease: [0.2, 0.7, 0.2, 1] } : { duration: 0.8, ease: [0.5, 0, 0.2, 1], opacity: { duration: 0.8, times: [0, 0.45, 1] }, filter: { duration: 0.8, times: [0, 0.45, 1] } }}
             style={{ width: ringSize, height: ringSize }}
           >
             <NeonRing size="100%" />
