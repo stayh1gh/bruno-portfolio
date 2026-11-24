@@ -1,10 +1,10 @@
 // Quiet background music. Browsers only allow audio after a click or key press, so it
-// starts on the first interaction and follows the same Sound on/off toggle as the typing.
+// starts on the first interaction and follows the Sound on/off toggle.
 // The track file (public/audio/background.mp3) is kept out of git; without it this is silent.
-import { onSoundChange, soundEnabled } from './typing-sound'
+import { onSoundChange, soundEnabled } from './sound-pref'
 
 const SRC = '/audio/background.mp3'
-const VOLUME = 0.12 // quiet: sits under the typing clicks
+const VOLUME = 0.12 // quiet, in the background
 
 let audio: HTMLAudioElement | null = null
 let fade = 0
