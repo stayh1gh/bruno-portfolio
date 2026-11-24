@@ -7,25 +7,20 @@ export type StoryStyle = 'b' | 's' | 'a' | 'c'
 /** `pause` holds the typing for that many milliseconds at that point. */
 export type StorySeg = { t: string; s?: StoryStyle } | { br: true } | { pause: number }
 
-/** The intro typed on the first screen. Pauses are where Bruno asked for them. */
+/** The intro typed on the first screen. One pause, after "Hi,". */
 export const STORY: StorySeg[] = [
   { t: 'Hi,' },
   { pause: 900 },
   { t: ' I’m ' },
   { t: 'Bruno Paradas,', s: 'b' },
-  { pause: 1100 },
   { t: ' Design Engineer,' },
-  { pause: 900 },
   { br: true },
   { t: 'I ' },
   { t: 'design,', s: 'a' },
-  { pause: 650 },
   { t: ' build,', s: 'a' },
-  { pause: 650 },
   { t: ' and ship', s: 'a' },
   { t: ' web products and ' },
   { t: 'design\u00A0systems', s: 's' }, // no break inside
-  { pause: 1200 },
   { br: true },
   { t: 'Currently working at ' },
   { t: 'Buzzfeed', s: 'c' },
