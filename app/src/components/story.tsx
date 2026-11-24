@@ -41,11 +41,7 @@ function flatten() {
     }
   }
   closeWord()
-  // Camera stops: the end of every line, and the end of the story.
-  const lineEnds: number[] = []
-  for (let k = 0; k < text.length; k++) if (text[k] === '\n') lineEnds.push(k)
-  lineEnds.push(i)
-  return { units, total: i, text, pauseAt, lineEnds }
+  return { units, total: i, text, pauseAt }
 }
 
 const STYLE: Record<StoryStyle, string> = {
@@ -57,20 +53,15 @@ const STYLE: Record<StoryStyle, string> = {
 
 // ── Pacing ───────────────────────────────────────────────────────────────────────────
 // The ring loads alone, then the story is typed at an even pace. Pauses come from the
-// copy itself ({ pause } in data.ts). Line 1 is typed zoomed in; each following line
-// pulls the camera back a little with every letter, until the next line's stop.
+// copy itself ({ pause } in data.ts). No zoom: the text is set at its final size.
 const LOADER_MS = 1600
 const CPS = 14 // letters per second
 const SMALL_PAUSE = { ',': 140, ' ': 35, '\n': 160 } as Record<string, number>
 
-function lerp(a: number, b: number, t: number) {
-  return a + (b - a) * Math.min(1, Math.max(0, t))
-}
-
 const TEXT_CLASS = cn(
   'text-center font-sans font-medium text-fg [text-wrap:balance]',
-  'max-w-[300px] text-[22px] leading-[1.32] tracking-[-0.015em]',
-  'md:w-max md:max-w-none md:text-[30px] md:leading-[1.3] md:tracking-[-0.025em]',
+  'max-w-[340px] text-[27px] leading-[1.25] tracking-[-0.02em]',
+  'md:w-max md:max-w-none md:text-[clamp(34px,3.3vw,60px)] md:leading-[1.22] md:tracking-[-0.03em]',
 )
 
 function renderUnits(units: Unit[], limit: number, animate: boolean): ReactNode[] {
@@ -94,67 +85,24 @@ function renderUnits(units: Unit[], limit: number, animate: boolean): ReactNode[
 
 export function Story() {
   const reduce = useReducedMotion()
-  const { units, total, text, pauseAt, lineEnds } = useMemo(flatten, [])
+  const { units, total, text, pauseAt } = useMemo(flatten, [])
   const wordEnds = useMemo(() => units.flatMap((u) => (u.kind === 'word' ? [u.end] : [])), [units])
 
   const containerRef = useRef<HTMLDivElement>(null)
   const blockRef = useRef<HTMLParagraphElement>(null)
-  const ghostsRef = useRef<HTMLDivElement>(null)
   const ringRef = useRef<RingHandle>(null)
 
   const [n, setN] = useState(0)
   const nRef = useRef(0)
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ['start start', 'end end'] })
 
-  // ── Camera: one scale per line end, measured from invisible copies ───────────────────
-  const [vp, setVp] = useState({ w: 1440, h: 900 })
+  const [mobile, setMobile] = useState(false)
   useLayoutEffect(() => {
-    const on = () => setVp({ w: window.innerWidth, h: window.innerHeight })
+    const on = () => setMobile(window.innerWidth < 768)
     on()
     window.addEventListener('resize', on)
     return () => window.removeEventListener('resize', on)
   }, [])
-  const [ghosts, setGhosts] = useState<{ w: number; h: number }[]>([])
-  useLayoutEffect(() => {
-    const wrap = ghostsRef.current
-    if (!wrap) return
-    const measure = () => setGhosts([...wrap.children].map((c) => ({ w: (c as HTMLElement).offsetWidth, h: (c as HTMLElement).offsetHeight })))
-    const ro = new ResizeObserver(measure)
-    ;[...wrap.children].forEach((c) => ro.observe(c))
-    void document.fonts?.ready.then(measure)
-    return () => ro.disconnect()
-  }, [])
-  const mobile = vp.w < 768
-  const fit = (g: { w: number; h: number } | undefined, wf: number, hf: number) =>
-    g && g.w && g.h ? Math.min((vp.w * wf) / g.w, (vp.h * hf) / g.h) : 1
-  // Line 1 is zoomed in; every later stop is a little further out. The text stays in the
-  // middle of the screen (about 60% of the width at most), never edge to edge.
-  const stopsList = lineEnds.map((_, k) =>
-    k === 0
-      ? Math.min(mobile ? 1.5 : 2, fit(ghosts[0], mobile ? 0.86 : 0.5, 0.4))
-      : Math.min(mobile ? 1.25 : 1.45, fit(ghosts[k], mobile ? 0.86 : 0.58, mobile ? 0.5 : 0.46)),
-  )
-  for (let k = 1; k < stopsList.length; k++) stopsList[k] = Math.min(stopsList[k], stopsList[k - 1])
-  const stops = useRef(stopsList)
-  stops.current = stopsList
-
-  const scaleTarget = useMotionValue(1)
-  const scale = useSpring(scaleTarget, { stiffness: 55, damping: 20, mass: 1 })
-  const scaleFor = (acc: number) => {
-    const s = stops.current
-    if (acc <= lineEnds[0]) return s[0]
-    for (let k = 1; k < lineEnds.length; k++) {
-      if (acc <= lineEnds[k]) return lerp(s[k - 1], s[k], (acc - lineEnds[k - 1]) / (lineEnds[k] - lineEnds[k - 1]))
-    }
-    return s[s.length - 1]
-  }
-  // Keep the camera right when the stops are measured or the window changes.
-  const stopsKey = stopsList.map((s) => s.toFixed(3)).join()
-  useEffect(() => {
-    scaleTarget.set(scaleFor(nRef.current))
-    if (reduce || nRef.current === 0) scale.jump(scaleFor(nRef.current))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stopsKey, reduce])
 
   // ── Typing ──────────────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -186,7 +134,6 @@ export function Story() {
         keyClick(ch === ' ' ? 'space' : ch === '\n' ? 'enter' : 'char')
         nRef.current = next
         setN(next)
-        scaleTarget.set(scaleFor(next))
       }
       if (acc < total) raf = requestAnimationFrame(tick)
     }
@@ -216,7 +163,7 @@ export function Story() {
   const ringSize = n === 0 ? (mobile ? 96 : 120) : mobile ? 52 : 64
   const ringYRaw = useTransform(() => {
     const h = boxH.get()
-    return h === 0 ? 0 : -(h * scale.get()) / 2 - (mobile ? 26 : 36) - ringSize / 2
+    return h === 0 ? 0 : -h / 2 - (mobile ? 26 : 36) - ringSize / 2
   })
   const ringY = useSpring(ringYRaw, { stiffness: 55, damping: 20 })
   // Centre the ring and the text together, not just the text.
@@ -237,15 +184,6 @@ export function Story() {
     <section ref={containerRef} aria-label="Intro" className="relative h-[230svh]">
       <p className="sr-only">{STORY.map((s) => ('br' in s ? ' ' : 't' in s ? s.t : '')).join('')}</p>
 
-      {/* Invisible copies used to measure the camera stop at the end of each line. */}
-      <div ref={ghostsRef} aria-hidden className="pointer-events-none invisible fixed left-0 top-0 -z-10 w-screen">
-        {lineEnds.map((end) => (
-          <p key={end} className={cn(TEXT_CLASS, 'absolute')}>
-            {renderUnits(units, end, false)}
-          </p>
-        ))}
-      </div>
-
       <div className="sticky top-0 flex h-svh items-center justify-center overflow-hidden">
         <motion.div aria-hidden className="relative flex items-center justify-center" style={{ opacity: exitOpacity, scale: exitScale, filter: exitBlur, y: stageY }}>
           <motion.div className="absolute z-10" style={{ y: ringY }} initial={{ opacity: 0, scale: 0.4 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.2, ease: [0.2, 0.7, 0.2, 1] }}>
@@ -255,12 +193,12 @@ export function Story() {
           </motion.div>
 
           <motion.div layout="position" transition={{ layout: { type: 'spring', stiffness: 55, damping: 20 } }}>
-            <motion.p ref={blockRef} style={{ scale }} className={TEXT_CLASS}>
+            <p ref={blockRef} className={TEXT_CLASS}>
               {renderUnits(units, n, true)}
               {n > 0 && (
                 <span className={cn('caret ml-[0.06em] inline-block h-[0.95em] w-[2px] translate-y-[0.14em] rounded-full bg-accent', done && 'opacity-80')} />
               )}
-            </motion.p>
+            </p>
           </motion.div>
         </motion.div>
 

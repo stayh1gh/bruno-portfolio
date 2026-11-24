@@ -24,7 +24,7 @@ export const STORY: StorySeg[] = [
   { pause: 650 },
   { t: ' and ship', s: 'a' },
   { t: ' web products and ' },
-  { t: 'design systems', s: 's' },
+  { t: 'design\u00A0systems', s: 's' }, // no break inside
   { pause: 1200 },
   { br: true },
   { t: 'Currently working at ' },
