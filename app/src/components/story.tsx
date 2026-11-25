@@ -200,8 +200,8 @@ export function Story() {
           </motion.div>
           {/* Soft dark wash on the text side so the type stays readable. */}
           <div className="absolute inset-0 bg-[radial-gradient(65%_75%_at_20%_50%,rgb(4_4_18/0.4),transparent_72%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
-          {/* Waist-up, bottom-right. Sized so his cheek sits level with the middle of the text and the hips meet the bottom edge. */}
-          <div className="absolute -bottom-[14svh] -right-[12vw] h-[46svh] lg:-bottom-[36svh] lg:-right-[1vw] lg:h-[113svh]">
+          {/* Waist-up, bottom-right, sitting a little above the text's middle; the top of the legs shows at the bottom edge. */}
+          <div className="absolute -bottom-[10svh] -right-[12vw] h-[46svh] lg:-bottom-[28svh] lg:-right-[1vw] lg:h-[113svh]">
           <motion.div
             className="h-full"
             style={{ y: astroY }}
