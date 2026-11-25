@@ -1,14 +1,11 @@
-import { useRef } from 'react'
 import { motion } from 'motion/react'
 import { CONTACT_EMAIL, LINKS } from '@/data'
 import { Button, Glare } from './ui/button'
 import { Magnetic } from './fx/magnetic'
 import { TextRoll } from './fx/text-roll'
 import { ArrowSwap } from './fx/arrow-swap'
-import { NeonRing, type RingHandle } from './neon-ring'
 
 export function Footer() {
-  const ring = useRef<RingHandle>(null)
   const rise = {
     initial: { opacity: 0, y: 24, filter: 'blur(8px)' },
     whileInView: { opacity: 1, y: 0, filter: 'blur(0px)' },
@@ -16,8 +13,17 @@ export function Footer() {
   }
   return (
     <footer id="contact" className="relative flex flex-col items-center px-5 pb-12 pt-24 text-center md:pt-40">
+      {/* Avatar: an anime illustration of Bruno in the astronaut's style, floating gently. */}
       <motion.div {...rise} transition={{ duration: 0.9 }}>
-        <NeonRing ref={ring} size={84} />
+        <motion.img
+          src="/images/avatar.webp"
+          alt="Illustrated portrait of Bruno"
+          width={112}
+          height={112}
+          className="size-24 rounded-full border border-line shadow-[0_0_0_6px_rgb(255_255_255/0.03),0_12px_40px_rgb(0_0_0/0.5)] md:size-28"
+          animate={{ y: [0, -6, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+        />
       </motion.div>
       <motion.h2
         {...rise}
@@ -30,7 +36,7 @@ export function Footer() {
       </motion.h2>
       <motion.div {...rise} transition={{ duration: 0.8, delay: 0.2 }} className="mt-9">
         <Magnetic>
-          <Button asChild size="lg" onPointerEnter={() => ring.current?.pulse(1.6)}>
+          <Button asChild size="lg">
             <a href={`mailto:${CONTACT_EMAIL}`}>
               <Glare />
               <TextRoll className="relative">Contact</TextRoll>
