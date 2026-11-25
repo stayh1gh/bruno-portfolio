@@ -199,10 +199,10 @@ export function Story() {
           </motion.div>
           {/* Soft dark wash on the text side so the type stays readable. */}
           <div className="absolute inset-0 bg-[radial-gradient(65%_75%_at_20%_50%,rgb(4_4_18/0.62),transparent_72%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
-          {/* Desktop: vertically centred, level with the story text, on the right. Phones: low, behind the text. */}
-          <div className="absolute bottom-[12svh] right-[8vw] h-[23svh] lg:inset-y-0 lg:right-[max(6vw,calc((100vw-1560px)/2+96px))] lg:flex lg:h-auto lg:items-center">
+          {/* Chest-up, anchored to the bottom-right corner: the cropped chest and backpack run off the screen edges. */}
+          <div className="absolute -bottom-[4svh] -right-[14vw] h-[46svh] lg:-bottom-[6svh] lg:-right-[2vw] lg:h-[95svh]">
           <motion.div
-            className="h-full lg:h-[80svh]"
+            className="h-full"
             style={{ y: astroY }}
             initial={false}
             animate={n === 0 ? { opacity: 0, x: 80, filter: 'blur(12px)' } : { opacity: 1, x: 0, filter: 'blur(0px)' }}
@@ -210,7 +210,7 @@ export function Story() {
           >
             <motion.div
               className="relative h-full max-lg:opacity-85"
-              animate={reduce ? undefined : { y: [0, -22, 0], x: [0, 8, 0], rotate: [-4, 3, -4] }}
+              animate={reduce ? undefined : { y: [0, -14, 0], x: [0, 6, 0], rotate: [-1.5, 1.2, -1.5] }}
               transition={{
                 y: { duration: 7, repeat: Infinity, ease: 'easeInOut' },
                 x: { duration: 9, repeat: Infinity, ease: 'easeInOut' },
@@ -219,17 +219,17 @@ export function Story() {
             >
               {/* Visor glow, breathing behind the helmet. */}
               <motion.div
-                className="absolute left-[14%] top-[-4%] aspect-square w-[62%] rounded-full bg-[radial-gradient(circle,rgb(91_134_255/0.45),transparent_65%)] blur-2xl"
+                className="absolute left-[12%] top-[10%] aspect-square w-[60%] rounded-full bg-[radial-gradient(circle,rgb(91_134_255/0.45),transparent_65%)] blur-2xl"
                 animate={reduce ? undefined : { opacity: [0.5, 0.9, 0.5], scale: [0.95, 1.05, 0.95] }}
                 transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
               />
               <img
-                src="/images/story/astronaut-full.webp"
-                srcSet="/images/story/astronaut-full-700.webp 700w, /images/story/astronaut-full.webp 883w"
-                sizes="(min-width: 1024px) 46svh, 30svh"
+                src="/images/story/astronaut-chest.webp"
+                srcSet="/images/story/astronaut-chest-900.webp 900w, /images/story/astronaut-chest.webp 1740w"
+                sizes="(min-width: 1024px) 76svh, 37svh"
                 alt=""
-                width={883}
-                height={1536}
+                width={1740}
+                height={2175}
                 className="relative block h-full w-auto max-w-none select-none"
                 draggable={false}
               />
