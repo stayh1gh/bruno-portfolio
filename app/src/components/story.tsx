@@ -4,7 +4,6 @@ import { STORY, type StoryStyle } from '@/data'
 import { cn } from '@/lib/utils'
 import { keyClick } from '@/lib/typing-sound'
 import { NeonRing } from './neon-ring'
-import { Galaxy } from './galaxy'
 
 // ── Flatten the story into typed units ───────────────────────────────────────────────
 type Char = { ch: string; s?: StoryStyle; i: number }
@@ -170,74 +169,54 @@ export function Story() {
   const exitOpacity = useTransform(scrollYProgress, [0.6, 1], [1, 0.35])
   const exitScale = useTransform(scrollYProgress, [0.6, 1], [1, 0.94])
   const exitBlur = useTransform(scrollYProgress, [0.6, 1], ['blur(0px)', 'blur(4px)'])
-  // The space scene fades to the page's black as the work section comes up.
-  const sceneOpacity = useTransform(scrollYProgress, [0.55, 1], [1, 0])
-  const astroY = useTransform(scrollYProgress, [0, 1], [0, -90])
 
   const done = n >= total
 
   return (
-    <section ref={containerRef} aria-label="Intro" className="relative h-[150svh]">
+    <section ref={containerRef} aria-label="Intro" className="relative h-[150svh] overflow-x-clip">
       <p className="sr-only">{STORY.map((s) => ('br' in s ? ' ' : 't' in s ? s.t : '')).join('')}</p>
 
-      <div className="sticky top-0 flex h-svh items-center overflow-hidden">
-        {/* Space scene: animated galaxy + the astronaut floating on the right. */}
-        <motion.div aria-hidden className="pointer-events-none absolute inset-0" style={{ opacity: sceneOpacity }}>
-          <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.6, ease: 'easeOut' }}>
-            {/* Painted backdrop (generated with Magnific from its anime galaxy set, tinted navy), drifting very slowly. */}
-            <motion.img
-              src="/images/story/space-2560.webp"
-              srcSet="/images/story/space-1280.webp 1280w, /images/story/space-2560.webp 2560w"
-              sizes="100vw"
-              alt=""
-              className="absolute inset-0 size-full object-cover"
-              initial={{ scale: 1.08, x: '-1.5%', y: '0%' }}
-              animate={reduce ? undefined : { scale: [1.08, 1.14, 1.08], x: ['-1.5%', '1.5%', '-1.5%'], y: ['0%', '-1.5%', '0%'] }}
-              transition={{ duration: 60, repeat: Infinity, ease: 'easeInOut' }}
-            />
-            {/* Twinkling stars and comets on top. */}
-            <Galaxy overlay className="absolute inset-0 size-full" />
-          </motion.div>
-          {/* Soft dark wash on the text side so the type stays readable. */}
-          <div className="absolute inset-0 bg-[radial-gradient(65%_75%_at_20%_50%,rgb(4_4_18/0.4),transparent_72%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
-          {/* Waist-up, bottom-right, sitting a little above the text's middle; the top of the legs shows at the bottom edge. */}
-          <div className="absolute -bottom-[14svh] -right-[10vw] h-[44svh] lg:-bottom-[4svh] lg:right-[5vw] lg:h-[86svh]">
+      {/* The astronaut, full body, floating on the right. He isn't pinned like the text:
+          he scrolls with the page, so his legs come into view as you scroll down. */}
+      <div aria-hidden className="pointer-events-none absolute right-[-16vw] top-[58svh] h-[78svh] lg:right-[5vw] lg:top-[11svh] lg:h-[150svh]">
+        <motion.div
+          className="h-full"
+          initial={false}
+          animate={n === 0 ? { opacity: 0, x: 80, filter: 'blur(12px)' } : { opacity: 1, x: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 1.6, ease: [0.2, 0.7, 0.2, 1] }}
+        >
           <motion.div
-            className="h-full"
-            style={{ y: astroY }}
-            initial={false}
-            animate={n === 0 ? { opacity: 0, x: 80, filter: 'blur(12px)' } : { opacity: 1, x: 0, filter: 'blur(0px)' }}
-            transition={{ duration: 1.6, ease: [0.2, 0.7, 0.2, 1] }}
+            className="relative h-full max-lg:opacity-85"
+            animate={reduce ? undefined : { y: [0, -14, 0], x: [0, 6, 0], rotate: [-1.5, 1.2, -1.5] }}
+            transition={{
+              y: { duration: 7, repeat: Infinity, ease: 'easeInOut' },
+              x: { duration: 9, repeat: Infinity, ease: 'easeInOut' },
+              rotate: { duration: 13, repeat: Infinity, ease: 'easeInOut' },
+            }}
           >
+            {/* Visor glow, breathing behind the helmet. */}
             <motion.div
-              className="relative h-full max-lg:opacity-85"
-              animate={reduce ? undefined : { y: [0, -14, 0], x: [0, 6, 0], rotate: [-1.5, 1.2, -1.5] }}
-              transition={{
-                y: { duration: 7, repeat: Infinity, ease: 'easeInOut' },
-                x: { duration: 9, repeat: Infinity, ease: 'easeInOut' },
-                rotate: { duration: 13, repeat: Infinity, ease: 'easeInOut' },
-              }}
-            >
-              {/* Visor glow, breathing behind the helmet. */}
-              <motion.div
-                className="absolute left-[22%] top-[0%] aspect-square w-[46%] rounded-full bg-[radial-gradient(circle,rgb(91_134_255/0.45),transparent_65%)] blur-2xl"
-                animate={reduce ? undefined : { opacity: [0.5, 0.9, 0.5], scale: [0.95, 1.05, 0.95] }}
-                transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-              />
-              <img
-                src="/images/story/astronaut-waist.webp"
-                srcSet="/images/story/astronaut-waist-900.webp 900w, /images/story/astronaut-waist.webp 1855w"
-                sizes="(min-width: 1024px) 80svh, 43svh"
-                alt=""
-                width={1855}
-                height={2010}
-                className="relative block h-full w-auto max-w-none select-none"
-                draggable={false}
-              />
-            </motion.div>
+              className="absolute left-[22%] top-[-1%] aspect-square w-[46%] rounded-full bg-[radial-gradient(circle,rgb(91_134_255/0.45),transparent_65%)] blur-2xl"
+              animate={reduce ? undefined : { opacity: [0.5, 0.9, 0.5], scale: [0.95, 1.05, 0.95] }}
+              transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <img
+              src="/images/story/astronaut-body.webp"
+              srcSet="/images/story/astronaut-body-700.webp 700w, /images/story/astronaut-body.webp 1304w"
+              sizes="(min-width: 1024px) 85svh, 44svh"
+              alt=""
+              width={1304}
+              height={2311}
+              className="relative block h-full w-auto max-w-none select-none"
+              draggable={false}
+            />
           </motion.div>
-          </div>
         </motion.div>
+      </div>
+
+      <div className="sticky top-0 flex h-svh items-center overflow-hidden">
+        {/* Soft dark wash on the text side so the type stays readable. */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(65%_75%_at_20%_50%,rgb(4_4_18/0.4),transparent_72%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
 
         {/* The loader ring sits in the middle of the screen. */}
         <div aria-hidden className="pointer-events-none absolute inset-0 grid place-items-center">

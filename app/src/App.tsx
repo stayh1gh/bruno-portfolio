@@ -9,6 +9,7 @@ import { About } from './components/about'
 import { OtherWork } from './components/other-work'
 import { SoundToggle } from './components/sound-toggle'
 import { Cursor } from './components/cursor'
+import { SpaceBackdrop } from './components/space-backdrop'
 import { startSmoothScroll } from './lib/smooth-scroll'
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
 
   return (
     <MotionConfig reducedMotion="user">
+      <SpaceBackdrop />
       <Nav panel={panel} setPanel={setPanel} />
       <main id="top">
         <Story />

@@ -45,7 +45,8 @@ html {
 }
 
 body {
-  background: var(--bg);
+  /* Transparent: the fixed space backdrop (components/space-backdrop.tsx) shows through. */
+  background: transparent;
   font-family: var(--font-sans);
   font-feature-settings: 'ss01', 'cv11';
 }
