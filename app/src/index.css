@@ -76,13 +76,6 @@ body {
   animation: char-in 0.5s cubic-bezier(0.25, 0.6, 0.25, 1) both;
 }
 
-@keyframes caret-blink {
-  0%, 45% { opacity: 1; }
-  55%, 100% { opacity: 0; }
-}
-.caret {
-  animation: caret-blink 1s steps(1) infinite;
-}
 
 @keyframes wheel {
   0% { transform: translateY(0); opacity: 1; }
@@ -90,14 +83,9 @@ body {
   100% { transform: translateY(0); opacity: 0; }
 }
 
-@keyframes eq {
-  from { transform: scaleY(0.25); }
-  to { transform: scaleY(1); }
-}
 
 @media (prefers-reduced-motion: reduce) {
   .char { animation: none; }
-  .caret { animation: none; }
 }
 
 /* Story: letters not typed yet keep their space so the text never shifts. */

@@ -2,7 +2,6 @@ import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type R
 import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { STORY, type StoryStyle } from '@/data'
 import { cn } from '@/lib/utils'
-import { keyClick } from '@/lib/typing-sound'
 import { NeonRing } from './neon-ring'
 
 // ── Flatten the story into typed units ───────────────────────────────────────────────
@@ -67,15 +66,13 @@ const TEXT_CLASS = cn(
   'md:text-[clamp(30px,2.8vw,52px)] md:leading-[1.3] md:tracking-[-0.025em]',
 )
 
-function renderUnits(units: Unit[], limit: number, caret: ReactNode): ReactNode[] {
+function renderUnits(units: Unit[], limit: number): ReactNode[] {
   // Every letter is in the layout from the start (hidden until typed), so lines are
   // balanced and centred on the final text and nothing shifts while typing.
-  const at = limit - 1 // index of the last typed character; the caret sits right after it
   const out: ReactNode[] = []
   units.forEach((u, k) => {
     if (u.kind === 'br') {
       out.push(<br key={k} />)
-      if (u.i === at) out.push(<Caret key="caret" el={caret} />)
       return
     }
     if (u.kind === 'space') {
@@ -84,7 +81,6 @@ function renderUnits(units: Unit[], limit: number, caret: ReactNode): ReactNode[
           {' '}
         </span>,
       )
-      if (u.i === at) out.push(<Caret key="caret" el={caret} />)
       return
     }
     out.push(
@@ -92,18 +88,12 @@ function renderUnits(units: Unit[], limit: number, caret: ReactNode): ReactNode[
         {u.chars.map((c) => (
           <Fragment key={c.i}>
             <span className={cn(c.i < limit ? 'char' : 'char-wait', c.s && STYLE[c.s])}>{c.ch}</span>
-            {c.i === at && <Caret el={caret} />}
           </Fragment>
         ))}
       </span>,
     )
   })
   return out
-}
-
-/** Zero-width anchor so the caret never pushes letters around. */
-function Caret({ el }: { el: ReactNode }) {
-  return <span className="relative inline-block w-0 align-baseline">{el}</span>
 }
 
 export function Story() {
@@ -151,7 +141,6 @@ export function Story() {
           holdUntil = now + (pauseAt[next] ?? SMALL_PAUSE[ch] ?? 0)
           acc = next // start the next letter cleanly after a pause
         }
-        keyClick(ch === ' ' ? 'space' : ch === '\n' ? 'enter' : 'char')
         nRef.current = next
         setN(next)
       }
@@ -233,7 +222,7 @@ export function Story() {
 
         {/* Same container as the navbar and work section; lines centred in it. */}
         <motion.div aria-hidden className="mx-auto w-full max-w-[2200px] origin-center px-5 md:px-8 xl:px-24" style={{ opacity: exitOpacity, scale: exitScale, filter: exitBlur }}>
-          <p className={TEXT_CLASS}>{renderUnits(units, n, <span className={cn('caret absolute -top-[0.8em] left-[0.05em] h-[0.95em] w-[2px] rounded-full bg-white', done && 'opacity-80')} />)}</p>
+          <p className={TEXT_CLASS}>{renderUnits(units, n)}</p>
         </motion.div>
 
         <ScrollCue done={done} progress={n / total} />

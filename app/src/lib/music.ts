@@ -1,7 +1,6 @@
-// Quiet background music that starts once the visitor reaches the work section.
-// Browsers only allow audio after a click, tap or key press (scrolling doesn't count),
-// so it plays when both are true: the visitor has interacted at least once, and the
-// work section has come into view. It follows the Sound on/off toggle.
+// Quiet background music from the first screen. Browsers only allow audio after a click,
+// tap or key press (scrolling doesn't count), so it starts on the visitor's first
+// interaction. It follows the corner music toggle.
 // The track file (public/audio/background.mp3) is kept out of git; without it this is silent.
 import { onSoundChange, soundEnabled } from './sound-pref'
 
@@ -12,7 +11,6 @@ const START = 23 // seconds into the track
 let audio: HTMLAudioElement | null = null
 let fade = 0
 let unlocked = false // the visitor has clicked / tapped / pressed a key
-let reached = false // the work section has been on screen
 
 function fadeTo(target: number, ms: number, then?: () => void) {
   if (!audio) return
@@ -30,7 +28,7 @@ function fadeTo(target: number, ms: number, then?: () => void) {
 }
 
 function play() {
-  if (!unlocked || !reached || !soundEnabled() || document.hidden) return
+  if (!unlocked || !soundEnabled() || document.hidden) return
   if (!audio) {
     // Starts at 0:23, and loops back to 0:23 rather than the beginning.
     const a = new Audio(`${SRC}#t=${START}`)
@@ -58,27 +56,12 @@ export function unlockMusic() {
   play()
 }
 
-/** Wire up the triggers once: the work section coming into view, the toggle, tab visibility. */
+/** Wire up the triggers once: the toggle and tab visibility. */
 export function setupMusic() {
-  const work = document.getElementById('work')
-  let io: IntersectionObserver | undefined
-  if (work) {
-    io = new IntersectionObserver(
-      ([e]) => {
-        if (!e.isIntersecting) return
-        reached = true
-        play()
-        io?.disconnect()
-      },
-      { threshold: 0.15 },
-    )
-    io.observe(work)
-  }
   const offToggle = onSoundChange((on) => (on ? play() : pause()))
   const onVis = () => (document.hidden ? pause() : play())
   document.addEventListener('visibilitychange', onVis)
   return () => {
-    io?.disconnect()
     offToggle()
     document.removeEventListener('visibilitychange', onVis)
   }
