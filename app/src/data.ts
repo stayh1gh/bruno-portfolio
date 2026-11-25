@@ -7,19 +7,15 @@ export type StoryStyle = 'b' | 'h' | 's' | 'a' | 'c'
 /** `pause` holds the typing for that many milliseconds at that point. */
 export type StorySeg = { t: string; s?: StoryStyle } | { br: true } | { pause: number }
 
-/** The intro typed on the first screen. One pause, after "Hi,". */
+/** The intro typed on the first screen: one paragraph that wraps naturally. One pause, after "Hi,". */
 export const STORY: StorySeg[] = [
   { t: 'Hi,' },
   { pause: 900 },
   { t: ' I’m ' },
   { t: 'Bruno Paradas,', s: 'b' },
-  { t: ' Design Engineer,' },
-  { br: true },
-  { t: 'I ' },
+  { t: ' Design Engineer. I ' },
   { t: 'design, build, and ship', s: 'h' },
-  { t: ' products and design\u00A0systems.' }, // no break inside "design systems"
-  { br: true },
-  { t: 'Currently working at ' },
+  { t: ' products and design\u00A0systems. Currently working at ' },
   { t: 'Buzzfeed', s: 'h' },
   { t: '.' },
 ]

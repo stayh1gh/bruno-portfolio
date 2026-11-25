@@ -63,9 +63,9 @@ const SMALL_PAUSE = { ',': 130, ' ': 28, '\n': 150 } as Record<string, number>
 
 const TEXT_CLASS = cn(
   // Phones: centred over the scene. Desktop: on the left, leaving the right side to the astronaut.
-  'text-center lg:max-w-[62%] lg:text-left font-sans font-normal text-white [text-wrap:balance] lg:[text-wrap:wrap]',
-  'text-[22px] leading-[1.35] tracking-[-0.015em]',
-  'md:text-[clamp(24px,2.2vw,40px)] md:leading-[1.3] md:tracking-[-0.025em]',
+  'text-center lg:max-w-[54%] lg:text-left font-sans font-normal text-white [text-wrap:pretty]',
+  'text-[24px] leading-[1.35] tracking-[-0.015em]',
+  'md:text-[clamp(28px,2.55vw,46px)] md:leading-[1.3] md:tracking-[-0.025em]',
 )
 
 function renderUnits(units: Unit[], limit: number, caret: ReactNode): ReactNode[] {
@@ -201,7 +201,7 @@ export function Story() {
           {/* Soft dark wash on the text side so the type stays readable. */}
           <div className="absolute inset-0 bg-[radial-gradient(65%_75%_at_20%_50%,rgb(4_4_18/0.4),transparent_72%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
           {/* Waist-up, bottom-right, sitting a little above the text's middle; the top of the legs shows at the bottom edge. */}
-          <div className="absolute -bottom-[10svh] -right-[12vw] h-[46svh] lg:-bottom-[5svh] lg:-right-[1vw] lg:h-[90svh]">
+          <div className="absolute -bottom-[14svh] -right-[10vw] h-[44svh] lg:-bottom-[4svh] lg:right-[5vw] lg:h-[86svh]">
           <motion.div
             className="h-full"
             style={{ y: astroY }}
@@ -220,17 +220,17 @@ export function Story() {
             >
               {/* Visor glow, breathing behind the helmet. */}
               <motion.div
-                className="absolute left-[20%] top-[2%] aspect-square w-[50%] rounded-full bg-[radial-gradient(circle,rgb(91_134_255/0.45),transparent_65%)] blur-2xl"
+                className="absolute left-[22%] top-[0%] aspect-square w-[46%] rounded-full bg-[radial-gradient(circle,rgb(91_134_255/0.45),transparent_65%)] blur-2xl"
                 animate={reduce ? undefined : { opacity: [0.5, 0.9, 0.5], scale: [0.95, 1.05, 0.95] }}
                 transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
               />
               <img
                 src="/images/story/astronaut-waist.webp"
-                srcSet="/images/story/astronaut-waist-900.webp 900w, /images/story/astronaut-waist.webp 1824w"
-                sizes="(min-width: 1024px) 73svh, 37svh"
+                srcSet="/images/story/astronaut-waist-900.webp 900w, /images/story/astronaut-waist.webp 1855w"
+                sizes="(min-width: 1024px) 80svh, 43svh"
                 alt=""
-                width={1824}
-                height={2248}
+                width={1855}
+                height={2010}
                 className="relative block h-full w-auto max-w-none select-none"
                 draggable={false}
               />
