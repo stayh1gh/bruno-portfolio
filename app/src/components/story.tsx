@@ -56,7 +56,7 @@ const STYLE: Record<StoryStyle, string> = {
 // copy itself ({ pause } in data.ts). The text is laid out at its final size and place
 // from the start, so typing never moves it.
 const LOADER_MS = 1600
-const CPS = 18 // letters per second
+const CPS = 21 // letters per second
 const SMALL_PAUSE = { ',': 130, ' ': 28, '\n': 150 } as Record<string, number>
 
 const TEXT_CLASS = cn(
