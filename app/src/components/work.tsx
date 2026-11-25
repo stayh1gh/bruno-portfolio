@@ -19,9 +19,9 @@ export function Work() {
           whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.7, ease: [0.2, 0.7, 0.2, 1] }}
-          className="text-[46px] font-medium leading-none tracking-[-0.035em] md:text-[64px]"
+          className="text-[46px] font-normal leading-none tracking-[-0.035em] text-white md:text-[64px]"
         >
-          What I’ve <span className="font-serif italic font-normal tracking-normal text-accent-2">built</span>
+          What I’ve <span className="font-semibold">built</span>
         </motion.h2>
         <LayoutGroup id="filters">
           <div role="tablist" aria-label="Filter projects" className="-mx-1 flex flex-wrap gap-1.5">
@@ -109,7 +109,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           </div>
           <div className="flex items-start gap-3 rounded-b-xl bg-card px-4 py-2.5">
             <div className="flex min-w-0 flex-1 flex-col gap-2">
-              <p className="text-base leading-[1.4] text-fg">
+              <p className="text-base leading-[1.4] text-white">
                 <span className="bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat transition-[background-size] duration-500 ease-[cubic-bezier(.2,.7,.2,1)] group-hover/card:bg-[length:100%_1px]">
                   {project.line}
                 </span>

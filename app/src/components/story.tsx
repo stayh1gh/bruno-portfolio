@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
+import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { STORY, type StoryStyle } from '@/data'
 import { cn } from '@/lib/utils'
 import { NeonRing } from './neon-ring'
@@ -159,7 +159,6 @@ export function Story() {
   const exitScale = useTransform(scrollYProgress, [0.6, 1], [1, 0.94])
   const exitBlur = useTransform(scrollYProgress, [0.6, 1], ['blur(0px)', 'blur(4px)'])
 
-  const done = n >= total
 
   return (
     <section ref={containerRef} aria-label="Intro" className="relative h-[150svh] overflow-x-clip">
@@ -225,38 +224,23 @@ export function Story() {
           <p className={TEXT_CLASS}>{renderUnits(units, n)}</p>
         </motion.div>
 
-        <ScrollCue done={done} progress={n / total} />
+        <ScrollCue />
       </div>
     </section>
   )
 }
 
-function ScrollCue({ done, progress }: { done: boolean; progress: number }) {
+/** Scroll hint: just the mouse, floating gently. */
+function ScrollCue() {
   return (
-    <div className="pointer-events-none absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3 md:bottom-11">
+    <motion.div
+      aria-hidden
+      className="pointer-events-none absolute bottom-8 left-1/2 -translate-x-1/2 md:bottom-11"
+      animate={{ y: [0, -8, 0] }}
+      transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+    >
       <MouseIcon />
-      <div className="relative h-4 w-60 overflow-hidden text-center">
-        <AnimatePresence initial={false} mode="popLayout">
-          <motion.span
-            key={done ? 'done' : 'typing'}
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '-100%', opacity: 0 }}
-            transition={{ duration: 0.45, ease: [0.7, 0, 0.2, 1] }}
-            className="block font-mono text-[11px] uppercase tracking-[0.22em] text-subtle"
-          >
-            {done ? 'Scroll to see the work' : 'Scroll to fast-forward'}
-          </motion.span>
-        </AnimatePresence>
-      </div>
-      <motion.div
-        className="h-[2px] overflow-hidden rounded-full bg-line"
-        animate={{ width: done ? 6 : 240, height: done ? 6 : 2 }}
-        transition={{ type: 'spring', stiffness: 160, damping: 20 }}
-      >
-        <div className="h-full w-full origin-left bg-accent" style={{ transform: `scaleX(${progress})` }} />
-      </motion.div>
-    </div>
+    </motion.div>
   )
 }
 
