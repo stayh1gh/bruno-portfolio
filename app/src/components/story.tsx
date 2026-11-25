@@ -47,6 +47,7 @@ function flatten() {
 
 const STYLE: Record<StoryStyle, string> = {
   b: 'font-semibold',
+  h: 'font-semibold', // highlight: weight only
   s: 'font-serif italic font-normal tracking-normal text-[1.08em]',
   a: 'text-accent',
   c: 'text-accent-2',
@@ -62,9 +63,9 @@ const SMALL_PAUSE = { ',': 130, ' ': 28, '\n': 150 } as Record<string, number>
 
 const TEXT_CLASS = cn(
   // Phones: centred over the scene. Desktop: on the left, leaving the right side to the astronaut.
-  'text-center lg:max-w-[48%] lg:text-left font-sans font-medium text-fg [text-wrap:balance]',
-  'text-[30px] leading-[1.25] tracking-[-0.02em]',
-  'md:text-[clamp(38px,3.8vw,68px)] md:leading-[1.22] md:tracking-[-0.03em]',
+  'text-center lg:max-w-[56%] lg:text-left font-sans font-normal text-white [text-wrap:balance]',
+  'text-[26px] leading-[1.3] tracking-[-0.02em]',
+  'md:text-[clamp(30px,2.9vw,52px)] md:leading-[1.25] md:tracking-[-0.03em]',
 )
 
 function renderUnits(units: Unit[], limit: number, caret: ReactNode): ReactNode[] {
@@ -199,8 +200,8 @@ export function Story() {
           </motion.div>
           {/* Soft dark wash on the text side so the type stays readable. */}
           <div className="absolute inset-0 bg-[radial-gradient(65%_75%_at_20%_50%,rgb(4_4_18/0.4),transparent_72%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
-          {/* Waist-up, anchored to the bottom-right corner: the cropped legs and backpack run off the screen edges. */}
-          <div className="absolute -bottom-[6svh] -right-[12vw] h-[37svh] lg:-bottom-[4svh] lg:-right-[1vw] lg:h-[80svh]">
+          {/* Waist-up, anchored low in the bottom-right corner: the hips, legs and backpack run off the screen edges. */}
+          <div className="absolute -bottom-[14svh] -right-[12vw] h-[46svh] lg:-bottom-[30svh] lg:-right-[1vw] lg:h-[100svh]">
           <motion.div
             className="h-full"
             style={{ y: astroY }}
@@ -226,7 +227,7 @@ export function Story() {
               <img
                 src="/images/story/astronaut-waist.webp"
                 srcSet="/images/story/astronaut-waist-900.webp 900w, /images/story/astronaut-waist.webp 1824w"
-                sizes="(min-width: 1024px) 60svh, 30svh"
+                sizes="(min-width: 1024px) 81svh, 37svh"
                 alt=""
                 width={1824}
                 height={2248}
@@ -253,7 +254,7 @@ export function Story() {
 
         {/* Same container as the navbar and work section; lines centred in it. */}
         <motion.div aria-hidden className="mx-auto w-full max-w-[1560px] origin-center px-5 md:px-8 xl:px-12" style={{ opacity: exitOpacity, scale: exitScale, filter: exitBlur }}>
-          <p className={TEXT_CLASS}>{renderUnits(units, n, <span className={cn('caret absolute -top-[0.8em] left-[0.05em] h-[0.95em] w-[2px] rounded-full bg-fg', done && 'opacity-80')} />)}</p>
+          <p className={TEXT_CLASS}>{renderUnits(units, n, <span className={cn('caret absolute -top-[0.8em] left-[0.05em] h-[0.95em] w-[2px] rounded-full bg-white', done && 'opacity-80')} />)}</p>
         </motion.div>
 
         <ScrollCue done={done} progress={n / total} />

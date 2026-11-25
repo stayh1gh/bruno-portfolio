@@ -2,8 +2,8 @@
 // the story copy and card one-liners come from the Figma file and are placeholders
 // Bruno will rewrite.
 
-/** Story text style: b = bold, s = serif italic, a = accent colour, c = second accent colour. */
-export type StoryStyle = 'b' | 's' | 'a' | 'c'
+/** Story text style: b = bold, h = highlighted (bold + marker), s = serif italic, a = accent colour, c = second accent colour. */
+export type StoryStyle = 'b' | 'h' | 's' | 'a' | 'c'
 /** `pause` holds the typing for that many milliseconds at that point. */
 export type StorySeg = { t: string; s?: StoryStyle } | { br: true } | { pause: number }
 
@@ -16,14 +16,11 @@ export const STORY: StorySeg[] = [
   { t: ' Design Engineer,' },
   { br: true },
   { t: 'I ' },
-  { t: 'design,', s: 'a' },
-  { t: ' build,', s: 'a' },
-  { t: ' and ship', s: 'a' },
-  { t: ' products and ' },
-  { t: 'design\u00A0systems', s: 's' }, // no break inside
+  { t: 'design, build, and ship', s: 'h' },
+  { t: ' products and design\u00A0systems' }, // no break inside "design systems"
   { br: true },
   { t: 'Currently working at ' },
-  { t: 'Buzzfeed', s: 'c' },
+  { t: 'Buzzfeed', s: 'h' },
   { t: '.' },
 ]
 
