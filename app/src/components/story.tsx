@@ -199,8 +199,8 @@ export function Story() {
           </motion.div>
           {/* Soft dark wash on the text side so the type stays readable. */}
           <div className="absolute inset-0 bg-[radial-gradient(65%_75%_at_20%_50%,rgb(4_4_18/0.4),transparent_72%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
-          {/* Chest-up, anchored to the bottom-right corner: the cropped chest and backpack run off the screen edges. */}
-          <div className="absolute -bottom-[6svh] -right-[12vw] h-[37svh] lg:-bottom-[4svh] lg:-right-[1vw] lg:h-[74svh]">
+          {/* Waist-up, anchored to the bottom-right corner: the cropped legs and backpack run off the screen edges. */}
+          <div className="absolute -bottom-[6svh] -right-[12vw] h-[37svh] lg:-bottom-[4svh] lg:-right-[1vw] lg:h-[80svh]">
           <motion.div
             className="h-full"
             style={{ y: astroY }}
@@ -219,17 +219,17 @@ export function Story() {
             >
               {/* Visor glow, breathing behind the helmet. */}
               <motion.div
-                className="absolute left-[12%] top-[10%] aspect-square w-[60%] rounded-full bg-[radial-gradient(circle,rgb(91_134_255/0.45),transparent_65%)] blur-2xl"
+                className="absolute left-[20%] top-[2%] aspect-square w-[50%] rounded-full bg-[radial-gradient(circle,rgb(91_134_255/0.45),transparent_65%)] blur-2xl"
                 animate={reduce ? undefined : { opacity: [0.5, 0.9, 0.5], scale: [0.95, 1.05, 0.95] }}
                 transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
               />
               <img
-                src="/images/story/astronaut-chest.webp"
-                srcSet="/images/story/astronaut-chest-900.webp 900w, /images/story/astronaut-chest.webp 1740w"
+                src="/images/story/astronaut-waist.webp"
+                srcSet="/images/story/astronaut-waist-900.webp 900w, /images/story/astronaut-waist.webp 1824w"
                 sizes="(min-width: 1024px) 60svh, 30svh"
                 alt=""
-                width={1740}
-                height={2175}
+                width={1824}
+                height={2248}
                 className="relative block h-full w-auto max-w-none select-none"
                 draggable={false}
               />
