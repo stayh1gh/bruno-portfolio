@@ -15,8 +15,11 @@ const STAR_HUES = ['255,255,255', '214,226,255', '190,205,255', '255,214,236', '
 
 // Diagonal direction of the light streaks and comets (rising to the right, like the art).
 const ANGLE = -0.42
+// Comets fall down-left at this angle below the horizontal (matches the painted meteors).
+const COMET_ANGLE = 0.62
 
-export function Galaxy({ className }: { className?: string }) {
+/** `overlay`: draw only the moving parts (twinkling stars, comets) on a transparent canvas, over a painted backdrop. */
+export function Galaxy({ className, overlay = false }: { className?: string; overlay?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -35,7 +38,7 @@ export function Galaxy({ className }: { className?: string }) {
     const pointer = { x: 0, y: 0, tx: 0, ty: 0 }
 
     const seedStars = () => {
-      const count = Math.round((w * h) / 4200)
+      const count = Math.round((w * h) / (overlay ? 7000 : 4200))
       stars = Array.from({ length: count }, () => {
         const depth = Math.random() < 0.7 ? 0.25 : Math.random() < 0.8 ? 0.6 : 1
         const r = depth === 1 ? 1 + Math.random() * 1.2 : depth === 0.6 ? 0.6 + Math.random() * 0.7 : 0.3 + Math.random() * 0.5
@@ -87,20 +90,30 @@ export function Galaxy({ className }: { className?: string }) {
     }
 
     const spawnComet = () => {
-      // Start off the lower-left or bottom edge and fly up-right along the streaks.
+      // Fall down and to the left, like the meteors painted in the backdrop.
       const speed = 520 + Math.random() * 520
-      const fromBottom = Math.random() < 0.55
-      const x = fromBottom ? Math.random() * w * 0.8 : -40
-      const y = fromBottom ? h + 40 : h * (0.25 + Math.random() * 0.75)
-      const jitter = (Math.random() - 0.5) * 0.25
-      const a = ANGLE + jitter
-      comets.push({ x, y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, life: 0, max: 1.4 + Math.random() * 1.2, len: 120 + Math.random() * 180, w: 1 + Math.random() * 1.4 })
+      const fromTop = Math.random() < 0.6
+      const x = fromTop ? w * (0.15 + Math.random() * 1.0) : w + 40
+      const y = fromTop ? -40 : h * Math.random() * 0.6
+      const a = COMET_ANGLE + (Math.random() - 0.5) * 0.18
+      comets.push({ x, y, vx: -Math.cos(a) * speed, vy: Math.sin(a) * speed, life: 0, max: 1.4 + Math.random() * 1.2, len: 120 + Math.random() * 180, w: 1 + Math.random() * 1.4 })
     }
 
     const draw = (t: number, dt: number) => {
       pointer.x += (pointer.tx - pointer.x) * 0.04
       pointer.y += (pointer.ty - pointer.y) * 0.04
 
+      ctx.filter = 'none'
+      ctx.globalCompositeOperation = 'source-over'
+      if (overlay) ctx.clearRect(0, 0, w, h)
+      else drawBackdrop(t)
+      ctx.globalCompositeOperation = 'lighter'
+      drawStars(t, dt)
+      drawComets(dt)
+      ctx.globalCompositeOperation = 'source-over'
+    }
+
+    const drawBackdrop = (t: number) => {
       // Base: near-black with a violet floor, matching the illustration.
       const base = ctx.createLinearGradient(0, 0, 0, h)
       base.addColorStop(0, '#02020a')
@@ -133,7 +146,9 @@ export function Galaxy({ className }: { className?: string }) {
         streak(cx, cy, w * len, thick, color, alpha * (0.75 + Math.sin(t * 0.5 + k * 7) * 0.25))
       }
       ctx.filter = 'none'
+    }
 
+    const drawStars = (t: number, dt: number) => {
       // Stars: twinkle, drift slowly left, parallax with the pointer.
       for (const st of stars) {
         st.x -= dt * 3 * st.depth
@@ -161,7 +176,9 @@ export function Galaxy({ className }: { className?: string }) {
         }
       }
 
-      // Comets.
+    }
+
+    const drawComets = (dt: number) => {
       if (!reduce) {
         nextComet -= dt
         if (nextComet <= 0) {
@@ -176,7 +193,7 @@ export function Galaxy({ className }: { className?: string }) {
         c.y += c.vy * dt
         const k = c.life / c.max
         const fade = k < 0.15 ? k / 0.15 : k > 0.75 ? Math.max(0, (1 - k) / 0.25) : 1
-        if (k >= 1 || c.x > w + 300 || c.y < -300) {
+        if (k >= 1 || c.x < -300 || c.y > h + 300) {
           comets.splice(i, 1)
           continue
         }
@@ -196,7 +213,6 @@ export function Galaxy({ className }: { className?: string }) {
         ctx.stroke()
         blob(c.x, c.y, 10 + c.w * 4, '200,215,255', 0.5 * fade)
       }
-      ctx.globalCompositeOperation = 'source-over'
     }
 
     resize()
@@ -244,7 +260,7 @@ export function Galaxy({ className }: { className?: string }) {
       window.removeEventListener('pointermove', onMove)
       document.removeEventListener('visibilitychange', onVis)
     }
-  }, [])
+  }, [overlay])
 
   return <canvas ref={ref} aria-hidden className={className} />
 }

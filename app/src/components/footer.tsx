@@ -55,7 +55,7 @@ export function Footer() {
       </motion.div>
       <p className="mt-16 font-mono text-[11px] uppercase tracking-[0.22em] text-subtle">© 2026 Bruno Paradas</p>
       <p className="mt-3 text-[12px] text-subtle">
-        Astronaut illustration:{' '}
+        Space illustrations:{' '}
         <a href="https://www.magnific.com/free-ai-image/anime-style-character-space_122494274.htm" target="_blank" rel="noreferrer" className="underline decoration-line underline-offset-2 hover:text-muted">
           Magnific
         </a>

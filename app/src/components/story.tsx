@@ -183,10 +183,22 @@ export function Story() {
         {/* Space scene: animated galaxy + the astronaut floating on the right. */}
         <motion.div aria-hidden className="pointer-events-none absolute inset-0" style={{ opacity: sceneOpacity }}>
           <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.6, ease: 'easeOut' }}>
-            <Galaxy className="size-full" />
+            {/* Painted backdrop (Magnific "Anime style galaxy background"), drifting very slowly. */}
+            <motion.img
+              src="/images/story/galaxy-2560.webp"
+              srcSet="/images/story/galaxy-1280.webp 1280w, /images/story/galaxy-2560.webp 2560w"
+              sizes="100vw"
+              alt=""
+              className="absolute inset-0 size-full object-cover"
+              initial={{ scale: 1.08, x: '-1.5%', y: '0%' }}
+              animate={reduce ? undefined : { scale: [1.08, 1.14, 1.08], x: ['-1.5%', '1.5%', '-1.5%'], y: ['0%', '-1.5%', '0%'] }}
+              transition={{ duration: 60, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            {/* Twinkling stars and comets on top. */}
+            <Galaxy overlay className="absolute inset-0 size-full" />
           </motion.div>
           {/* Soft dark wash on the text side so the type stays readable. */}
-          <div className="absolute inset-0 bg-[radial-gradient(70%_80%_at_20%_50%,rgb(0_0_0/0.45),transparent_70%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(65%_75%_at_20%_50%,rgb(4_4_18/0.62),transparent_72%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
           {/* Desktop: vertically centred, level with the story text, on the right. Phones: low, behind the text. */}
           <div className="absolute bottom-[12svh] right-[8vw] h-[23svh] lg:inset-y-0 lg:right-[max(6vw,calc((100vw-1560px)/2+96px))] lg:flex lg:h-auto lg:items-center">
           <motion.div
