@@ -38,7 +38,7 @@
 
 html {
   /* Matches the bottom of the space painting (components/space-backdrop.tsx). */
-  background: #040406;
+  background: #090a0d;
   color: var(--fg);
   scrollbar-gutter: stable;
   -webkit-font-smoothing: antialiased;
