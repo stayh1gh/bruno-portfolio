@@ -10,7 +10,8 @@ npm run dev   # http://localhost:4185
 ```
 
 - `src/data.ts` — story copy, cards, other work, career (story copy and card lines are placeholders).
-- `src/components/story.tsx` — typed story: zooms out as it grows, scrolling fast-forwards it.
-- `src/components/neon-ring.tsx` — the glowing ring, drawn in code (no image).
+- `src/components/story.tsx` — typed intro over the space scene; scrolling fast-forwards it.
+- `src/components/space-backdrop.tsx` + `galaxy.tsx` — the page-long space background, twinkling stars and comets.
 - `src/components/fx/*` — hover effects: letter roll, magnetic pull, arrow swap; glare lives in `ui/button.tsx`.
-- Palette: shades of blue; tokens at the top of `src/index.css`.
+- Palette and tokens at the top of `src/index.css`.
+- **Picking this up?** Read `HANDOFF.md` first.
