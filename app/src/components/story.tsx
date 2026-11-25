@@ -183,10 +183,10 @@ export function Story() {
         {/* Space scene: animated galaxy + the astronaut floating on the right. */}
         <motion.div aria-hidden className="pointer-events-none absolute inset-0" style={{ opacity: sceneOpacity }}>
           <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.6, ease: 'easeOut' }}>
-            {/* Painted backdrop (Magnific "Anime style galaxy background"), drifting very slowly. */}
+            {/* Painted backdrop (generated with Magnific from its anime galaxy set, tinted navy), drifting very slowly. */}
             <motion.img
-              src="/images/story/galaxy-2560.webp"
-              srcSet="/images/story/galaxy-1280.webp 1280w, /images/story/galaxy-2560.webp 2560w"
+              src="/images/story/space-2560.webp"
+              srcSet="/images/story/space-1280.webp 1280w, /images/story/space-2560.webp 2560w"
               sizes="100vw"
               alt=""
               className="absolute inset-0 size-full object-cover"
@@ -198,9 +198,9 @@ export function Story() {
             <Galaxy overlay className="absolute inset-0 size-full" />
           </motion.div>
           {/* Soft dark wash on the text side so the type stays readable. */}
-          <div className="absolute inset-0 bg-[radial-gradient(65%_75%_at_20%_50%,rgb(4_4_18/0.62),transparent_72%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(65%_75%_at_20%_50%,rgb(4_4_18/0.4),transparent_72%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
           {/* Chest-up, anchored to the bottom-right corner: the cropped chest and backpack run off the screen edges. */}
-          <div className="absolute -bottom-[4svh] -right-[14vw] h-[46svh] lg:-bottom-[6svh] lg:-right-[2vw] lg:h-[95svh]">
+          <div className="absolute -bottom-[6svh] -right-[12vw] h-[37svh] lg:-bottom-[6svh] lg:-right-[2vw] lg:h-[95svh]">
           <motion.div
             className="h-full"
             style={{ y: astroY }}
