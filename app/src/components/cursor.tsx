@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring } from 'motion/react'
-import { cn } from '@/lib/utils'
 
 /**
- * Custom cursor: a small dot that sits exactly on the pointer, and a neon ring (the
- * loader's colour) that trails behind it on a spring.
+ * Custom cursor: a single frosted-glass ring (see-through, blurring what's under it)
+ * that follows the pointer.
  * - Over links and buttons the ring grows and fills softly.
  * - Over a project card (`data-cursor="view"`) it becomes a filled disc that says "View".
  * - It shrinks a little while pressed and hides when the pointer leaves the window.
@@ -24,7 +23,7 @@ export function Cursor() {
 
   const x = useMotionValue(-100)
   const y = useMotionValue(-100)
-  const spring = reduce ? { stiffness: 2000, damping: 100 } : { stiffness: 520, damping: 38, mass: 0.5 }
+  const spring = reduce ? { stiffness: 2000, damping: 100 } : { stiffness: 900, damping: 55, mass: 0.3 } // only a ring now: it stays close to the pointer
   const rx = useSpring(x, spring)
   const ry = useSpring(y, spring)
 
@@ -74,18 +73,18 @@ export function Cursor() {
 
   if (!enabled) return null
 
+  // A frosted-glass ring: see-through, softly blurring what's under it.
   const ring = {
-    default: { size: 24, fill: 'rgb(91 134 255 / 0)', border: 'rgb(169 226 255 / 0.55)' },
-    link: { size: 40, fill: 'rgb(91 134 255 / 0.14)', border: 'rgb(169 226 255 / 0.8)' },
-    view: { size: 76, fill: 'rgb(91 134 255 / 0.92)', border: 'rgb(169 226 255 / 0.9)' },
+    default: { size: 24, fill: 'rgb(243 236 214 / 0.08)', border: 'rgb(243 236 214 / 0.4)' },
+    link: { size: 40, fill: 'rgb(243 236 214 / 0.14)', border: 'rgb(243 236 214 / 0.55)' },
+    view: { size: 76, fill: 'rgb(91 134 255 / 0.55)', border: 'rgb(185 213 255 / 0.6)' },
   }[mode]
 
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 z-[100]">
-      {/* Ring: trails the pointer */}
       <motion.div className="absolute left-0 top-0" style={{ x: rx, y: ry }}>
         <motion.div
-          className="grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border backdrop-blur-[1px]"
+          className="grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border"
           initial={false}
           animate={{
             width: ring.size,
@@ -94,7 +93,9 @@ export function Cursor() {
             borderColor: ring.border,
             opacity: visible ? 1 : 0,
             scale: down ? 0.82 : 1,
-            boxShadow: mode === 'view' ? '0 0 32px rgb(79 141 255 / 0.55)' : '0 0 14px rgb(79 141 255 / 0.35)',
+            // Blur what's under the ring, except over links so their text stays readable.
+            backdropFilter: mode === 'link' ? 'blur(0px)' : 'blur(6px)',
+            boxShadow: mode === 'view' ? '0 0 28px rgb(79 141 255 / 0.4)' : '0 2px 12px rgb(0 0 0 / 0.25)',
           }}
           transition={{ type: 'spring', stiffness: 320, damping: 26 }}
         >
@@ -106,7 +107,7 @@ export function Cursor() {
                 animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
                 exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.12 } }}
                 transition={{ duration: 0.25 }}
-                className="text-[13px] font-medium tracking-[-0.01em] text-bg"
+                className="text-[13px] font-medium tracking-[-0.01em] text-fg"
               >
                 {label}
               </motion.span>
@@ -115,15 +116,6 @@ export function Cursor() {
         </motion.div>
       </motion.div>
 
-      {/* Dot: exactly on the pointer */}
-      <motion.div className="absolute left-0 top-0" style={{ x, y }}>
-        <motion.div
-          className={cn('-translate-x-1/2 -translate-y-1/2 rounded-full bg-fg')}
-          initial={false}
-          animate={{ width: 6, height: 6, opacity: visible && mode !== 'view' ? 1 : 0, scale: mode === 'link' ? 0.6 : 1 }}
-          transition={{ duration: 0.18 }}
-        />
-      </motion.div>
     </div>
   )
 }
