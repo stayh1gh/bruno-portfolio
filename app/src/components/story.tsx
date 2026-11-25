@@ -232,7 +232,7 @@ export function Story() {
         </div>
 
         {/* Same container as the navbar and work section; lines centred in it. */}
-        <motion.div aria-hidden className="mx-auto w-full max-w-[1560px] origin-center px-5 md:px-8 xl:px-12" style={{ opacity: exitOpacity, scale: exitScale, filter: exitBlur }}>
+        <motion.div aria-hidden className="mx-auto w-full max-w-[2200px] origin-center px-5 md:px-8 xl:px-10" style={{ opacity: exitOpacity, scale: exitScale, filter: exitBlur }}>
           <p className={TEXT_CLASS}>{renderUnits(units, n, <span className={cn('caret absolute -top-[0.8em] left-[0.05em] h-[0.95em] w-[2px] rounded-full bg-white', done && 'opacity-80')} />)}</p>
         </motion.div>
 
