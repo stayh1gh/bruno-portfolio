@@ -200,8 +200,8 @@ export function Story() {
           </motion.div>
           {/* Soft dark wash on the text side so the type stays readable. */}
           <div className="absolute inset-0 bg-[radial-gradient(65%_75%_at_20%_50%,rgb(4_4_18/0.4),transparent_72%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
-          {/* Waist-up, anchored low in the bottom-right corner: the hips, legs and backpack run off the screen edges. */}
-          <div className="absolute -bottom-[14svh] -right-[12vw] h-[46svh] lg:-bottom-[30svh] lg:-right-[1vw] lg:h-[100svh]">
+          {/* Waist-up, bottom-right. Sized so his cheek sits level with the middle of the text and the hips meet the bottom edge. */}
+          <div className="absolute -bottom-[14svh] -right-[12vw] h-[46svh] lg:-bottom-[36svh] lg:-right-[1vw] lg:h-[113svh]">
           <motion.div
             className="h-full"
             style={{ y: astroY }}
@@ -227,7 +227,7 @@ export function Story() {
               <img
                 src="/images/story/astronaut-waist.webp"
                 srcSet="/images/story/astronaut-waist-900.webp 900w, /images/story/astronaut-waist.webp 1824w"
-                sizes="(min-width: 1024px) 81svh, 37svh"
+                sizes="(min-width: 1024px) 92svh, 37svh"
                 alt=""
                 width={1824}
                 height={2248}
