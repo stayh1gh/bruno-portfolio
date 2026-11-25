@@ -187,8 +187,10 @@ export function Story() {
           </motion.div>
           {/* Soft dark wash on the text side so the type stays readable. */}
           <div className="absolute inset-0 bg-[radial-gradient(70%_80%_at_20%_50%,rgb(0_0_0/0.45),transparent_70%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
+          {/* Desktop: vertically centred, level with the story text, on the right. Phones: low, behind the text. */}
+          <div className="absolute -bottom-[4svh] -right-[30vw] w-[118vw] max-w-none lg:top-0 lg:bottom-0 lg:-right-[2vw] lg:flex lg:w-[min(56vw,1100px)] lg:items-center">
           <motion.div
-            className="absolute -bottom-[4svh] -right-[30vw] w-[118vw] max-w-none lg:-bottom-[3svh] lg:-right-[2vw] lg:w-[min(56vw,1100px)]"
+            className="w-full"
             style={{ y: astroY }}
             initial={false}
             animate={n === 0 ? { opacity: 0, x: 80, filter: 'blur(12px)' } : { opacity: 1, x: 0, filter: 'blur(0px)' }}
@@ -199,7 +201,7 @@ export function Story() {
               animate={reduce ? undefined : { y: [0, -16, 0], rotate: [-1.2, 1, -1.2] }}
               transition={{ y: { duration: 7, repeat: Infinity, ease: 'easeInOut' }, rotate: { duration: 11, repeat: Infinity, ease: 'easeInOut' } }}
             >
-              {/* Visor glow, breathing behind the helmet. The photo's top edge is cut, so it fades into space. */}
+              {/* Visor glow, breathing behind the helmet. */}
               <motion.div
                 className="absolute left-[18%] top-[8%] size-[55%] rounded-full bg-[radial-gradient(circle,rgb(91_134_255/0.45),transparent_65%)] blur-2xl"
                 animate={reduce ? undefined : { opacity: [0.5, 0.9, 0.5], scale: [0.95, 1.05, 0.95] }}
@@ -212,11 +214,12 @@ export function Story() {
                 alt=""
                 width={1991}
                 height={1499}
-                className="relative block h-auto w-full select-none [mask-image:linear-gradient(to_bottom,transparent_0%,black_22%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,black_22%)]"
+                className="relative block h-auto w-full select-none"
                 draggable={false}
               />
             </motion.div>
           </motion.div>
+          </div>
         </motion.div>
 
         {/* The loader ring sits in the middle of the screen. */}
