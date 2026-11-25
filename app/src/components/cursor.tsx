@@ -75,9 +75,9 @@ export function Cursor() {
   if (!enabled) return null
 
   const ring = {
-    default: { size: 34, fill: 'rgb(91 134 255 / 0)', border: 'rgb(169 226 255 / 0.55)' },
-    link: { size: 54, fill: 'rgb(91 134 255 / 0.14)', border: 'rgb(169 226 255 / 0.8)' },
-    view: { size: 92, fill: 'rgb(91 134 255 / 0.92)', border: 'rgb(169 226 255 / 0.9)' },
+    default: { size: 24, fill: 'rgb(91 134 255 / 0)', border: 'rgb(169 226 255 / 0.55)' },
+    link: { size: 40, fill: 'rgb(91 134 255 / 0.14)', border: 'rgb(169 226 255 / 0.8)' },
+    view: { size: 76, fill: 'rgb(91 134 255 / 0.92)', border: 'rgb(169 226 255 / 0.9)' },
   }[mode]
 
   return (
