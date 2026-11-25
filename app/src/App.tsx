@@ -19,13 +19,16 @@ export default function App() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <SpaceBackdrop />
       <Nav panel={panel} setPanel={setPanel} />
-      <main id="top">
-        <Story />
-        <Work />
-      </main>
-      <Footer />
+      {/* The space painting spans everything in this wrapper, top to bottom. */}
+      <div className="relative">
+        <SpaceBackdrop />
+        <main id="top">
+          <Story />
+          <Work />
+        </main>
+        <Footer />
+      </div>
       <Overlay open={panel !== null} label={panel === 'other' ? 'Other work' : 'About'} onClose={close}>
         {(scrollRef) => (panel === 'other' ? <OtherWork /> : <About scrollRef={scrollRef} />)}
       </Overlay>

@@ -64,7 +64,7 @@ const TEXT_CLASS = cn(
   // Phones: centred over the scene. Desktop: on the left, leaving the right side to the astronaut.
   'text-center lg:max-w-[54%] lg:text-left font-sans font-normal text-white [text-wrap:pretty]',
   'text-[24px] leading-[1.35] tracking-[-0.015em]',
-  'md:text-[clamp(28px,2.55vw,46px)] md:leading-[1.3] md:tracking-[-0.025em]',
+  'md:text-[clamp(30px,2.8vw,52px)] md:leading-[1.3] md:tracking-[-0.025em]',
 )
 
 function renderUnits(units: Unit[], limit: number, caret: ReactNode): ReactNode[] {
@@ -232,7 +232,7 @@ export function Story() {
         </div>
 
         {/* Same container as the navbar and work section; lines centred in it. */}
-        <motion.div aria-hidden className="mx-auto w-full max-w-[2200px] origin-center px-5 md:px-8 xl:px-10" style={{ opacity: exitOpacity, scale: exitScale, filter: exitBlur }}>
+        <motion.div aria-hidden className="mx-auto w-full max-w-[2200px] origin-center px-5 md:px-8 xl:px-24" style={{ opacity: exitOpacity, scale: exitScale, filter: exitBlur }}>
           <p className={TEXT_CLASS}>{renderUnits(units, n, <span className={cn('caret absolute -top-[0.8em] left-[0.05em] h-[0.95em] w-[2px] rounded-full bg-white', done && 'opacity-80')} />)}</p>
         </motion.div>
 

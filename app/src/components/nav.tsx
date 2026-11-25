@@ -48,7 +48,7 @@ export function Nav({ panel, setPanel }: { panel: Panel; setPanel: (p: Panel) =>
           scrolled && !panel ? 'opacity-100' : 'opacity-0',
         )}
       />
-      <div className="relative mx-auto flex h-[72px] w-full max-w-[2200px] items-center justify-between px-5 md:h-[84px] md:px-8 xl:px-10">
+      <div className="relative mx-auto flex h-[72px] w-full max-w-[2200px] items-center justify-between px-5 md:h-[84px] md:px-8 xl:px-24">
         <a
           href="#top"
           onClick={() => setPanel(null)}
