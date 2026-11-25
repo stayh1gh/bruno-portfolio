@@ -63,9 +63,9 @@ const SMALL_PAUSE = { ',': 130, ' ': 28, '\n': 150 } as Record<string, number>
 
 const TEXT_CLASS = cn(
   // Phones: centred over the scene. Desktop: on the left, leaving the right side to the astronaut.
-  'text-center lg:max-w-[56%] lg:text-left font-sans font-normal text-white [text-wrap:balance]',
-  'text-[26px] leading-[1.3] tracking-[-0.02em]',
-  'md:text-[clamp(30px,2.9vw,52px)] md:leading-[1.25] md:tracking-[-0.03em]',
+  'text-center lg:max-w-[62%] lg:text-left font-sans font-normal text-white [text-wrap:balance] lg:[text-wrap:wrap]',
+  'text-[22px] leading-[1.35] tracking-[-0.015em]',
+  'md:text-[clamp(24px,2.2vw,40px)] md:leading-[1.3] md:tracking-[-0.025em]',
 )
 
 function renderUnits(units: Unit[], limit: number, caret: ReactNode): ReactNode[] {
@@ -201,7 +201,7 @@ export function Story() {
           {/* Soft dark wash on the text side so the type stays readable. */}
           <div className="absolute inset-0 bg-[radial-gradient(65%_75%_at_20%_50%,rgb(4_4_18/0.4),transparent_72%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
           {/* Waist-up, bottom-right, sitting a little above the text's middle; the top of the legs shows at the bottom edge. */}
-          <div className="absolute -bottom-[10svh] -right-[12vw] h-[46svh] lg:-bottom-[28svh] lg:-right-[1vw] lg:h-[113svh]">
+          <div className="absolute -bottom-[10svh] -right-[12vw] h-[46svh] lg:-bottom-[5svh] lg:-right-[1vw] lg:h-[90svh]">
           <motion.div
             className="h-full"
             style={{ y: astroY }}
@@ -227,7 +227,7 @@ export function Story() {
               <img
                 src="/images/story/astronaut-waist.webp"
                 srcSet="/images/story/astronaut-waist-900.webp 900w, /images/story/astronaut-waist.webp 1824w"
-                sizes="(min-width: 1024px) 92svh, 37svh"
+                sizes="(min-width: 1024px) 73svh, 37svh"
                 alt=""
                 width={1824}
                 height={2248}
