@@ -22,11 +22,11 @@ export function Footer() {
       <motion.h2
         {...rise}
         transition={{ duration: 0.8, delay: 0.1 }}
-        className="mt-8 text-[41px] font-medium leading-[1.05] tracking-[-0.035em] md:text-[55px]"
+        className="mt-8 text-[41px] font-normal leading-[1.1] tracking-[-0.035em] text-white md:text-[55px]"
       >
         Want to build something?
         <br />
-        <span className="font-serif text-[1.08em] italic font-normal tracking-normal text-accent-2">Let’s talk</span>
+        <span className="font-semibold">Let’s talk</span>
       </motion.h2>
       <motion.div {...rise} transition={{ duration: 0.8, delay: 0.2 }} className="mt-9">
         <Magnetic>
