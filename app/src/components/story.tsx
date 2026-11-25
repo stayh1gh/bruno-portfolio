@@ -56,7 +56,7 @@ const STYLE: Record<StoryStyle, string> = {
 // copy itself ({ pause } in data.ts). The text is laid out at its final size and place
 // from the start, so typing never moves it.
 const LOADER_MS = 1600
-const CPS = 21 // letters per second
+const CPS = 23 // letters per second
 const SMALL_PAUSE = { ',': 130, ' ': 28, '\n': 150 } as Record<string, number>
 
 const TEXT_CLASS = cn(
@@ -190,7 +190,7 @@ export function Story() {
 
         {/* Same container as the navbar and work section; lines centred in it. */}
         <motion.div aria-hidden className="mx-auto w-full max-w-[1560px] origin-center px-5 md:px-8 xl:px-12" style={{ opacity: exitOpacity, scale: exitScale, filter: exitBlur }}>
-          <p className={TEXT_CLASS}>{renderUnits(units, n, <span className={cn('caret absolute -top-[0.8em] left-[0.05em] h-[0.95em] w-[2px] rounded-full bg-accent', done && 'opacity-80')} />)}</p>
+          <p className={TEXT_CLASS}>{renderUnits(units, n, <span className={cn('caret absolute -top-[0.8em] left-[0.05em] h-[0.95em] w-[2px] rounded-full bg-fg', done && 'opacity-80')} />)}</p>
         </motion.div>
 
         <ScrollCue done={done} progress={n / total} />
