@@ -1,15 +1,15 @@
 import { Galaxy } from './galaxy'
 
 /**
- * The space behind the whole page: one tall painting (generated with Magnific from the
- * story's backdrop, tinted navy) that scrolls with the page. It's lightest at the top and
+ * The space behind the whole page: one tall dark watercolor-galaxy painting (generated with
+ * Magnific from its watercolor galaxy set, with a gradual fade baked in) that scrolls with the page. It's lightest at the top and
  * gets darker as you go down, so the last section sits on near-black with a few stars.
  * Past the bottom of the painting the page continues in its darkest colour.
  *
  * On top, a fixed layer of twinkling stars and the occasional comet keeps it alive
  * wherever you are on the page.
  */
-export const SPACE_BOTTOM = '#0e0b19'
+export const SPACE_BOTTOM = '#040406'
 
 export function SpaceBackdrop() {
   return (

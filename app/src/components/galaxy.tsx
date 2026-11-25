@@ -41,7 +41,7 @@ export function Galaxy({ className, overlay = false }: { className?: string; ove
       const count = Math.round((w * h) / (overlay ? 7000 : 4200))
       stars = Array.from({ length: count }, () => {
         const depth = Math.random() < 0.7 ? 0.25 : Math.random() < 0.8 ? 0.6 : 1
-        const r = depth === 1 ? 1 + Math.random() * 1.2 : depth === 0.6 ? 0.6 + Math.random() * 0.7 : 0.3 + Math.random() * 0.5
+        const r = depth === 1 ? 0.6 + Math.random() * 0.6 : depth === 0.6 ? 0.4 + Math.random() * 0.4 : 0.25 + Math.random() * 0.3
         return {
           x: Math.random() * w,
           y: Math.random() * h,
@@ -163,7 +163,7 @@ export function Galaxy({ className, overlay = false }: { className?: string; ove
         ctx.fill()
         if (st.glint && tw > 0.6) {
           const gl = (tw - 0.6) / 0.4
-          const len = st.r * 7 * gl
+          const len = st.r * 5 * gl
           ctx.strokeStyle = `rgba(${st.hue},${0.55 * gl})`
           ctx.lineWidth = 0.7
           ctx.beginPath()
@@ -172,7 +172,7 @@ export function Galaxy({ className, overlay = false }: { className?: string; ove
           ctx.moveTo(x, y - len)
           ctx.lineTo(x, y + len)
           ctx.stroke()
-          blob(x, y, st.r * 6, st.hue, 0.25 * gl)
+          blob(x, y, st.r * 4, st.hue, 0.2 * gl)
         }
       }
 
