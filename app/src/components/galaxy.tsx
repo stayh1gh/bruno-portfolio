@@ -38,7 +38,7 @@ export function Galaxy({ className, overlay = false }: { className?: string; ove
     const pointer = { x: 0, y: 0, tx: 0, ty: 0 }
 
     const seedStars = () => {
-      const count = Math.round((w * h) / (overlay ? 7000 : 4200))
+      const count = Math.round((w * h) / (overlay ? 9000 : 4200))
       stars = Array.from({ length: count }, () => {
         const depth = Math.random() < 0.7 ? 0.25 : Math.random() < 0.8 ? 0.6 : 1
         const r = depth === 1 ? 0.6 + Math.random() * 0.6 : depth === 0.6 ? 0.4 + Math.random() * 0.4 : 0.25 + Math.random() * 0.3
