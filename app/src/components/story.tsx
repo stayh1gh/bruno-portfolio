@@ -188,33 +188,37 @@ export function Story() {
           {/* Soft dark wash on the text side so the type stays readable. */}
           <div className="absolute inset-0 bg-[radial-gradient(70%_80%_at_20%_50%,rgb(0_0_0/0.45),transparent_70%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
           {/* Desktop: vertically centred, level with the story text, on the right. Phones: low, behind the text. */}
-          <div className="absolute -bottom-[4svh] -right-[30vw] w-[118vw] max-w-none lg:top-0 lg:bottom-0 lg:-right-[2vw] lg:flex lg:w-[min(56vw,1100px)] lg:items-center">
+          <div className="absolute bottom-[12svh] right-[8vw] h-[23svh] lg:inset-y-0 lg:right-[max(6vw,calc((100vw-1560px)/2+96px))] lg:flex lg:h-auto lg:items-center">
           <motion.div
-            className="w-full"
+            className="h-full lg:h-[80svh]"
             style={{ y: astroY }}
             initial={false}
             animate={n === 0 ? { opacity: 0, x: 80, filter: 'blur(12px)' } : { opacity: 1, x: 0, filter: 'blur(0px)' }}
             transition={{ duration: 1.6, ease: [0.2, 0.7, 0.2, 1] }}
           >
             <motion.div
-              className="relative max-lg:opacity-60"
-              animate={reduce ? undefined : { y: [0, -16, 0], rotate: [-1.2, 1, -1.2] }}
-              transition={{ y: { duration: 7, repeat: Infinity, ease: 'easeInOut' }, rotate: { duration: 11, repeat: Infinity, ease: 'easeInOut' } }}
+              className="relative h-full max-lg:opacity-85"
+              animate={reduce ? undefined : { y: [0, -22, 0], x: [0, 8, 0], rotate: [-4, 3, -4] }}
+              transition={{
+                y: { duration: 7, repeat: Infinity, ease: 'easeInOut' },
+                x: { duration: 9, repeat: Infinity, ease: 'easeInOut' },
+                rotate: { duration: 13, repeat: Infinity, ease: 'easeInOut' },
+              }}
             >
               {/* Visor glow, breathing behind the helmet. */}
               <motion.div
-                className="absolute left-[18%] top-[8%] size-[55%] rounded-full bg-[radial-gradient(circle,rgb(91_134_255/0.45),transparent_65%)] blur-2xl"
+                className="absolute left-[14%] top-[-4%] aspect-square w-[62%] rounded-full bg-[radial-gradient(circle,rgb(91_134_255/0.45),transparent_65%)] blur-2xl"
                 animate={reduce ? undefined : { opacity: [0.5, 0.9, 0.5], scale: [0.95, 1.05, 0.95] }}
                 transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
               />
               <img
-                src="/images/story/astronaut.webp"
-                srcSet="/images/story/astronaut-1000.webp 1000w, /images/story/astronaut.webp 1991w"
-                sizes="(min-width: 1024px) 56vw, 118vw"
+                src="/images/story/astronaut-full.webp"
+                srcSet="/images/story/astronaut-full-700.webp 700w, /images/story/astronaut-full.webp 883w"
+                sizes="(min-width: 1024px) 46svh, 30svh"
                 alt=""
-                width={1991}
-                height={1499}
-                className="relative block h-auto w-full select-none"
+                width={883}
+                height={1536}
+                className="relative block h-full w-auto max-w-none select-none"
                 draggable={false}
               />
             </motion.div>
