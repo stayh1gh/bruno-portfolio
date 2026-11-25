@@ -200,7 +200,7 @@ export function Story() {
           {/* Soft dark wash on the text side so the type stays readable. */}
           <div className="absolute inset-0 bg-[radial-gradient(65%_75%_at_20%_50%,rgb(4_4_18/0.4),transparent_72%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
           {/* Chest-up, anchored to the bottom-right corner: the cropped chest and backpack run off the screen edges. */}
-          <div className="absolute -bottom-[6svh] -right-[12vw] h-[37svh] lg:-bottom-[6svh] lg:-right-[2vw] lg:h-[95svh]">
+          <div className="absolute -bottom-[6svh] -right-[12vw] h-[37svh] lg:-bottom-[4svh] lg:-right-[1vw] lg:h-[74svh]">
           <motion.div
             className="h-full"
             style={{ y: astroY }}
@@ -226,7 +226,7 @@ export function Story() {
               <img
                 src="/images/story/astronaut-chest.webp"
                 srcSet="/images/story/astronaut-chest-900.webp 900w, /images/story/astronaut-chest.webp 1740w"
-                sizes="(min-width: 1024px) 76svh, 37svh"
+                sizes="(min-width: 1024px) 60svh, 30svh"
                 alt=""
                 width={1740}
                 height={2175}
