@@ -1,8 +1,7 @@
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { STORY, type StoryStyle } from '@/data'
 import { cn } from '@/lib/utils'
-import { NeonRing } from './neon-ring'
 
 // ── Flatten the story into typed units ───────────────────────────────────────────────
 type Char = { ch: string; s?: StoryStyle; i: number }
@@ -55,9 +54,10 @@ const STYLE: Record<StoryStyle, string> = {
 // The ring loads alone, then the story is typed at an even pace. Pauses come from the
 // copy itself ({ pause } in data.ts). The text is laid out at its final size and place
 // from the start, so typing never moves it.
-const LOADER_MS = 1600
+// Intro: the space and the astronaut fade in first; typing starts as they settle.
+const INTRO_MS = 1300
 const CPS = 23 // letters per second
-const SMALL_PAUSE = { ',': 130, ' ': 28, '\n': 150 } as Record<string, number>
+const SMALL_PAUSE = {} as Record<string, number> // no pauses: an even pace throughout
 
 const TEXT_CLASS = cn(
   // Phones: centred over the scene. Desktop: on the left, leaving the right side to the astronaut.
@@ -106,14 +106,6 @@ export function Story() {
   const nRef = useRef(0)
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ['start start', 'end end'] })
 
-  const [mobile, setMobile] = useState(false)
-  useLayoutEffect(() => {
-    const on = () => setMobile(window.innerWidth < 768)
-    on()
-    window.addEventListener('resize', on)
-    return () => window.removeEventListener('resize', on)
-  }, [])
-
   // ── Typing ──────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (reduce) {
@@ -123,7 +115,7 @@ export function Story() {
     }
     let raf = 0
     let last = performance.now()
-    let holdUntil = last + LOADER_MS
+    let holdUntil = last + INTRO_MS
     let acc = nRef.current
     const tick = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000)
@@ -151,9 +143,6 @@ export function Story() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reduce, scrollYProgress, total, text, pauseAt])
 
-  // The ring is the loader: alone in the centre, then it fades away as the text appears.
-  const ringSize = mobile ? 96 : 120
-
   // Leaving: the story dims and recedes as the work section comes up.
   const exitOpacity = useTransform(scrollYProgress, [0.6, 1], [1, 0.35])
   const exitScale = useTransform(scrollYProgress, [0.6, 1], [1, 0.94])
@@ -169,9 +158,9 @@ export function Story() {
       <div aria-hidden className="pointer-events-none absolute right-[-12vw] top-[60svh] h-[66svh] lg:right-[7vw] lg:top-[14svh] lg:h-[125svh]">
         <motion.div
           className="h-full"
-          initial={false}
-          animate={n === 0 ? { opacity: 0, x: 80, filter: 'blur(12px)' } : { opacity: 1, x: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 1.6, ease: [0.2, 0.7, 0.2, 1] }}
+          initial={{ opacity: 0, y: 40, scale: 0.97, filter: 'blur(14px)' }}
+          animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+          transition={{ duration: 2, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
         >
           <motion.div
             className="relative h-full max-lg:opacity-85"
@@ -205,19 +194,6 @@ export function Story() {
       <div className="sticky top-0 flex h-svh items-center overflow-hidden">
         {/* Soft dark wash on the text side so the type stays readable. */}
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(65%_75%_at_20%_50%,rgb(4_4_18/0.4),transparent_72%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
-
-        {/* The loader ring sits in the middle of the screen. */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 grid place-items-center">
-            <motion.div
-              className="pointer-events-none"
-              initial={{ opacity: 0, scale: 0.4 }}
-              animate={n === 0 ? { opacity: 1, scale: 1, filter: 'blur(0px)' } : { opacity: [1, 1, 0], y: -ringSize * 1.6, scale: 0.6, filter: ['blur(0px)', 'blur(0px)', 'blur(8px)'] }}
-              transition={n === 0 ? { duration: 1.2, ease: [0.2, 0.7, 0.2, 1] } : { duration: 0.8, ease: [0.5, 0, 0.2, 1], opacity: { duration: 0.8, times: [0, 0.45, 1] }, filter: { duration: 0.8, times: [0, 0.45, 1] } }}
-              style={{ width: ringSize, height: ringSize }}
-            >
-              <NeonRing size="100%" />
-            </motion.div>
-        </div>
 
         {/* Same container as the navbar and work section; lines centred in it. */}
         <motion.div aria-hidden className="mx-auto w-full max-w-[2200px] origin-center px-5 md:px-8 xl:px-24" style={{ opacity: exitOpacity, scale: exitScale, filter: exitBlur }}>

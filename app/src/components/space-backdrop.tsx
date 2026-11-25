@@ -1,3 +1,4 @@
+import { motion } from 'motion/react'
 import { Galaxy } from './galaxy'
 
 /**
@@ -14,7 +15,14 @@ export const SPACE_BOTTOM = '#050509'
 export function SpaceBackdrop() {
   return (
     <>
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" style={{ background: SPACE_BOTTOM }}>
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+        style={{ background: SPACE_BOTTOM }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.4, ease: 'easeOut' }}
+      >
         <img
           src="/images/story/space-long.webp"
           srcSet="/images/story/space-long-800.webp 800w, /images/story/space-long.webp 1440w"
@@ -29,7 +37,7 @@ export function SpaceBackdrop() {
           className="absolute inset-x-0 bottom-0 top-[120svh]"
           style={{ background: 'linear-gradient(to bottom, rgb(5 5 9 / 0) 0, rgb(5 5 9 / 0.7) 60svh, rgb(5 5 9 / 0.85) 100%)' }}
         />
-      </div>
+      </motion.div>
       <Galaxy overlay className="pointer-events-none fixed inset-0 -z-10 size-full" />
     </>
   )
