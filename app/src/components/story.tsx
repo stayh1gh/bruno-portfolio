@@ -178,7 +178,7 @@ export function Story() {
 
       {/* The astronaut, full body, floating on the right. He isn't pinned like the text:
           he scrolls with the page, so his legs come into view as you scroll down. */}
-      <div aria-hidden className="pointer-events-none absolute right-[-16vw] top-[58svh] h-[78svh] lg:right-[5vw] lg:top-[11svh] lg:h-[150svh]">
+      <div aria-hidden className="pointer-events-none absolute right-[-12vw] top-[60svh] h-[66svh] lg:right-[7vw] lg:top-[14svh] lg:h-[125svh]">
         <motion.div
           className="h-full"
           initial={false}
@@ -203,7 +203,7 @@ export function Story() {
             <img
               src="/images/story/astronaut-body.webp"
               srcSet="/images/story/astronaut-body-700.webp 700w, /images/story/astronaut-body.webp 1304w"
-              sizes="(min-width: 1024px) 85svh, 44svh"
+              sizes="(min-width: 1024px) 71svh, 37svh"
               alt=""
               width={1304}
               height={2311}
