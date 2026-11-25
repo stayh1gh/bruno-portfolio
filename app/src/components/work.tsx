@@ -88,9 +88,9 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         initial={false}
         animate={inView ? { opacity: 1, x: 0, rotate: 0, filter: 'blur(0px)' } : { opacity: 0, x: -160, rotate: -3, filter: 'blur(6px)' }}
         transition={{
-          default: { type: 'spring', stiffness: 70, damping: 16, mass: 0.9, delay: order * 0.14 },
-          opacity: { duration: 0.5, delay: order * 0.14 },
-          filter: { duration: 0.6, delay: order * 0.14 },
+          default: { type: 'spring', stiffness: 120, damping: 20, mass: 0.8, delay: order * 0.1 },
+          opacity: { duration: 0.35, delay: order * 0.1 },
+          filter: { duration: 0.4, delay: order * 0.1 },
         }}
         className="origin-bottom-left"
       >
