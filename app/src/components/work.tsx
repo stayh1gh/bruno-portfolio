@@ -34,7 +34,7 @@ export function Work() {
                   aria-selected={on}
                   onClick={() => setFilter(f)}
                   className={cn(
-                    'relative h-8 rounded-full px-3.5 text-[15px] outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-accent-2/60',
+                    'relative h-10 rounded-full px-[18px] text-[16px] outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-accent-2/60',
                     on ? 'text-bg' : 'text-muted hover:text-fg',
                   )}
                 >
@@ -67,16 +67,15 @@ export function Work() {
 
 function ProjectCard({ project, index }: { project: Project; index: number }) {
   const Wrapper = project.href ? 'a' : 'div'
-  // Scroll-linked, like kenjilambert.com: the card grows from 88% as it comes up, its
-  // image keeps zooming slowly while it passes, and the text rises in a beat later.
+  // Entrance: as a row comes into view its cards slide in from the left one after
+  // another (left column first), like cards being dealt onto the table.
+  // While on screen, the image keeps zooming slowly with the scroll.
   const ref = useRef<HTMLLIElement>(null)
   const { scrollYProgress: p } = useScroll({ target: ref, offset: ['start end', 'end start'] })
-  const lag = (index % 3) * 0.03 // columns arrive one after another
-  const scale = useTransform(p, [0, 0.4 + lag], [0.88, 1])
-  const opacity = useTransform(p, [0, 0.22 + lag], [0, 1])
   const zoom = useTransform(p, [0, 1], [1, 1.12])
-  const textY = useTransform(p, [0.1 + lag, 0.42 + lag], [26, 0])
-  const textOpacity = useTransform(p, [0.1 + lag, 0.42 + lag], [0, 1])
+  const order = index % 3
+  // Driven by useInView (not whileInView) so it still plays inside AnimatePresence initial={false}.
+  const inView = useInView(ref, { once: true, amount: 0.2 })
 
   return (
     <motion.li
@@ -85,7 +84,16 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       exit={{ opacity: 0, scale: 0.94, filter: 'blur(6px)', transition: { duration: 0.25 } }}
       transition={{ layout: { type: 'spring', stiffness: 260, damping: 30 } }}
     >
-      <motion.div style={{ scale, opacity }} className="origin-bottom">
+      <motion.div
+        initial={false}
+        animate={inView ? { opacity: 1, x: 0, rotate: 0, filter: 'blur(0px)' } : { opacity: 0, x: -160, rotate: -3, filter: 'blur(6px)' }}
+        transition={{
+          default: { type: 'spring', stiffness: 70, damping: 16, mass: 0.9, delay: order * 0.14 },
+          opacity: { duration: 0.5, delay: order * 0.14 },
+          filter: { duration: 0.6, delay: order * 0.14 },
+        }}
+        className="origin-bottom-left"
+      >
         {/* Figma "ProjectCard": media on top, then a footer panel with the line, tags and company mark. */}
         <Wrapper
           {...(project.href ? { href: project.href } : {})}
@@ -99,7 +107,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
               <CardMedia media={project.media} label={project.client} />
             </motion.div>
           </div>
-          <motion.div style={{ y: textY, opacity: textOpacity }} className="flex items-start gap-3 rounded-b-xl bg-card px-4 py-2.5">
+          <div className="flex items-start gap-3 rounded-b-xl bg-card px-4 py-2.5">
             <div className="flex min-w-0 flex-1 flex-col gap-2">
               <p className="text-base leading-[1.4] text-fg">
                 <span className="bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat transition-[background-size] duration-500 ease-[cubic-bezier(.2,.7,.2,1)] group-hover/card:bg-[length:100%_1px]">
@@ -115,7 +123,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             <span title={project.client} className="grid size-6 shrink-0 place-items-center rounded-[5px] border-[0.6px] border-line bg-[#18181b] font-mono text-[8px] text-fg">
               {project.mark}
             </span>
-          </motion.div>
+          </div>
         </Wrapper>
       </motion.div>
     </motion.li>
