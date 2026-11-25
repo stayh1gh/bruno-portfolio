@@ -10,18 +10,18 @@ export function About({ scrollRef }: { scrollRef: RefObject<HTMLDivElement | nul
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.6, ease: [0.2, 0.7, 0.2, 1] }}
-        className="text-[46px] font-medium leading-none tracking-[-0.035em] md:text-[64px]"
+        className="text-[46px] font-normal leading-none tracking-[-0.035em] text-white md:text-[64px]"
       >
-        About <span className="font-serif italic font-normal tracking-normal text-accent-2">me</span>
+        About <span className="font-semibold">me</span>
       </motion.h2>
       <motion.p
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.18, duration: 0.6, ease: [0.2, 0.7, 0.2, 1] }}
-        className="mt-6 max-w-[780px] text-2xl leading-snug tracking-[-0.015em] text-fg/90 md:text-[30px]"
+        className="mt-6 max-w-[780px] text-2xl leading-snug tracking-[-0.015em] text-white md:text-[30px]"
       >
         Product Designer with more than 8 years of experience designing digital products end to end. I excel at building and
-        maintaining <span className="font-serif italic text-accent">Design Systems</span> and creating meaningful experiences.
+        maintaining <span className="font-semibold">Design Systems</span> and creating meaningful experiences.
       </motion.p>
       <motion.h3
         initial={{ opacity: 0 }}
@@ -76,11 +76,11 @@ function TimelineItem({ job, index, on, current }: { job: Job; index: number; on
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
         <div className="flex items-center gap-4">
           <Logo job={job} />
-          <span className="text-2xl font-medium tracking-[-0.02em] md:text-[25px]">{job.company}</span>
+          <span className="text-2xl font-semibold tracking-[-0.02em] text-white md:text-[25px]">{job.company}</span>
         </div>
         <span className="text-lg tabular-nums text-muted md:text-2xl">{job.period}</span>
       </div>
-      <p className="mt-3 text-base text-fg md:ml-12">
+      <p className="mt-3 text-base text-white md:ml-12">
         {job.role} · {job.location}
       </p>
       {job.summary && <p className="mt-3 max-w-[560px] text-[17px] leading-relaxed text-muted md:ml-12">{job.summary}</p>}

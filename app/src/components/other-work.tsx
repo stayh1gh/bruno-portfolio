@@ -8,9 +8,9 @@ export function OtherWork() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.6, ease: [0.2, 0.7, 0.2, 1] }}
-        className="text-[46px] font-medium leading-none tracking-[-0.035em] md:text-[64px]"
+        className="text-[46px] font-normal leading-none tracking-[-0.035em] text-white md:text-[64px]"
       >
-        Other <span className="font-serif italic font-normal tracking-normal text-accent-2">work</span>
+        Other <span className="font-semibold">work</span>
       </motion.h2>
       <motion.p
         initial={{ opacity: 0, y: 20 }}
