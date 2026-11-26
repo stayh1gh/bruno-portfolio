@@ -2,12 +2,11 @@ import * as THREE from 'three'
 
 /**
  * The space behind the dot astronaut, drawn in the same dots: a field of stars, a tilted spiral
- * galaxy (upper left), a ringed planet (lower left, partly off-screen) and a small planet (upper
- * right, above the backpack). Everything is dimmer and finer than the astronaut, so it stays a
- * background.
+ * galaxy (upper left) and a small planet (upper right, above the backpack). Everything is dimmer
+ * and finer than the astronaut, so it stays a background.
  *
- * - The galaxy turns slowly; the planets spin and are lit from the upper left like the astronaut,
- *   so each shows a bright limb and a dark side; the stars twinkle.
+ * - The galaxy turns slowly; the planet spins and is lit from the upper left like the astronaut,
+ *   so it shows a bright limb and a dark side; the stars twinkle.
  * - It fades in dot by dot, shifts a little against the cursor (parallax), and on scroll drifts
  *   up more slowly than the astronaut and fades out.
  *
@@ -16,9 +15,7 @@ import * as THREE from 'three'
 
 const STAR = 0
 const GALAXY = 1
-const PLANET = 2 // the ringed one
-const MOON = 3 // the small one
-const RING = 4
+const PLANET = 2
 
 const vertex = /* glsl */ `
   uniform vec2 uView;
@@ -31,7 +28,6 @@ const vertex = /* glsl */ `
   attribute vec2 aCenter;
   attribute vec3 aLocal;
   attribute vec4 aMeta; // kind, brightness, size, random
-  attribute float aRad;
   varying float vA;
 
   vec3 rotX(vec3 p, float a) { float c = cos(a), s = sin(a); return vec3(p.x, p.y * c - p.z * s, p.y * s + p.z * c); }
@@ -54,28 +50,15 @@ const vertex = /* glsl */ `
       p = rotX(p, 1.08);
       p = rotZ(p, -0.42);
       depth = 0.3;
-    } else if (kind < 3.5) {
-      // Planets: spin about their own axis, lit from the upper left; the far side is hidden.
-      bool big = kind < 2.5;
-      p = rotY(aLocal, uTime * (big ? 0.06 : 0.1));
+    } else {
+      // Planet: spins about its own axis, lit from the upper left; the far side is hidden.
+      p = rotY(aLocal, uTime * 0.1);
       p = rotX(p, -0.4);
-      p = rotZ(p, big ? 0.38 : -0.25);
+      p = rotZ(p, -0.25);
       vec3 n = normalize(p);
       float light = max(0.0, dot(n, normalize(vec3(-0.62, -0.5, 0.6))));
       vis = smoothstep(-0.04, 0.12, n.z);
       lum *= 0.16 + 1.25 * light;
-      depth = 0.6;
-    } else {
-      // Ring: same tilt as its planet; the part behind the planet is hidden.
-      p = rotY(aLocal, uTime * 0.025);
-      p = rotX(p, -0.4);
-      p = rotZ(p, 0.38);
-      if (p.z < 0.0 && length(p.xy) < aRad) vis = 0.0;
-      // The planet's shadow falls across the ring, away from the light.
-      vec2 away = normalize(vec2(0.62, 0.5));
-      float along = dot(p.xy, away);
-      float off = abs(dot(p.xy, vec2(-away.y, away.x)));
-      if (along > 0.0) lum *= 0.25 + 0.75 * smoothstep(aRad * 0.8, aRad * 1.05, off);
       depth = 0.6;
     }
 
@@ -99,13 +82,11 @@ function place(vw: number, vh: number) {
   if (vw >= 1024)
     return {
       galaxy: { x: vw * 0.25, y: vh * 0.2, r: Math.min(vw * 0.13, vh * 0.21) },
-      planet: { x: vw * 0.12, y: vh * 0.83, r: vh * 0.085 },
-      moon: { x: vw * 0.9, y: vh * 0.165, r: vh * 0.034 },
+      planet: { x: vw * 0.9, y: vh * 0.165, r: vh * 0.034 },
     }
   return {
     galaxy: { x: vw * 0.3, y: vh * 0.17, r: vw * 0.27 },
-    planet: { x: vw * 0.1, y: vh * 0.86, r: vh * 0.045 },
-    moon: { x: vw * 0.84, y: vh * 0.24, r: vh * 0.016 },
+    planet: { x: vw * 0.84, y: vh * 0.24, r: vh * 0.016 },
   }
 }
 
@@ -113,12 +94,10 @@ function build(vw: number, vh: number) {
   const center: number[] = []
   const local: number[] = []
   const meta: number[] = []
-  const rad: number[] = []
-  const add = (kind: number, cx: number, cy: number, x: number, y: number, z: number, lum: number, size: number, r = 0) => {
+  const add = (kind: number, cx: number, cy: number, x: number, y: number, z: number, lum: number, size: number) => {
     center.push(cx, cy)
     local.push(x, y, z)
     meta.push(kind, lum, size, Math.random())
-    rad.push(r)
   }
   const small = () => 0.5 + Math.random() * 0.4
   const at = place(vw, vh)
@@ -156,28 +135,17 @@ function build(vw: number, vh: number) {
     add(GALAXY, g.x, g.y, Math.cos(a) * r, Math.sin(a) * r, z, lum, Math.random() < 0.05 ? 1.0 + Math.random() * 0.5 : small())
   }
 
-  // Planets: dots at random on a sphere. The big one has cloud bands and a ring with a gap.
-  const sphere = (kind: number, o: { x: number; y: number; r: number }, shade: (nx: number, ny: number, nz: number) => number) => {
-    const n = Math.round(Math.min(7000, (4 * Math.PI * o.r * o.r) / 20))
-    for (let i = 0; i < n; i++) {
-      const ny = Math.random() * 2 - 1
-      const a = Math.random() * Math.PI * 2
-      const h = Math.sqrt(1 - ny * ny)
-      const nx = Math.cos(a) * h
-      const nz = Math.sin(a) * h
-      add(kind, o.x, o.y, nx * o.r, ny * o.r, nz * o.r, shade(nx, ny, nz) * (0.8 + Math.random() * 0.4), small(), o.r)
-    }
-  }
-  sphere(PLANET, at.planet, (_x, y) => 0.72 + 0.26 * Math.sin(Math.asin(y) * 9 + 0.6))
-  sphere(MOON, at.moon, (x, y, z) => 0.8 + 0.2 * Math.sin(x * 4 + 1.3) * Math.sin(y * 5 + z * 3))
-  const p = at.planet
-  const ringN = Math.round(Math.min(4200, (p.r * p.r) / 3.2))
-  for (let i = 0; i < ringN; i++) {
-    let t = Math.random()
-    if (t > 0.56 && t < 0.64) t = Math.random() * 0.56 // the gap
-    const r = p.r * (1.42 + 0.82 * t)
+  // Planet: dots at random on a sphere, with a few darker patches.
+  const o = at.planet
+  const pN = Math.round(Math.min(7000, (4 * Math.PI * o.r * o.r) / 20))
+  for (let i = 0; i < pN; i++) {
+    const ny = Math.random() * 2 - 1
     const a = Math.random() * Math.PI * 2
-    add(RING, p.x, p.y, Math.cos(a) * r, gauss() * 0.6, Math.sin(a) * r, (t < 0.56 ? 0.7 : 0.42) * (0.7 + Math.random() * 0.5), small(), p.r)
+    const h = Math.sqrt(1 - ny * ny)
+    const nx = Math.cos(a) * h
+    const nz = Math.sin(a) * h
+    const shade = 0.8 + 0.2 * Math.sin(nx * 4 + 1.3) * Math.sin(ny * 5 + nz * 3)
+    add(PLANET, o.x, o.y, nx * o.r, ny * o.r, nz * o.r, shade * (0.8 + Math.random() * 0.4), small())
   }
 
   const geo = new THREE.BufferGeometry()
@@ -185,7 +153,6 @@ function build(vw: number, vh: number) {
   geo.setAttribute('aCenter', new THREE.BufferAttribute(new Float32Array(center), 2))
   geo.setAttribute('aLocal', new THREE.BufferAttribute(new Float32Array(local), 3))
   geo.setAttribute('aMeta', new THREE.BufferAttribute(new Float32Array(meta), 4))
-  geo.setAttribute('aRad', new THREE.BufferAttribute(new Float32Array(rad), 1))
   return geo
 }
 

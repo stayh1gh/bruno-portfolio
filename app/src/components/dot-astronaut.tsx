@@ -22,7 +22,7 @@ import { createDotSpace } from './dot-space'
  * - Hovering: the dots drift away from the cursor and drift back.
  * - Scrolling out of the intro, the figure rises, turns and its dots fly off to the left.
  *
- * Behind it, in the same dots: stars, a spiral galaxy and two planets (dot-space.ts).
+ * Behind it, in the same dots: stars, a spiral galaxy and a small planet (dot-space.ts).
  *
  * Two WebGL draw calls (three.js Points + small shaders), in screen pixels.
  */
@@ -388,7 +388,7 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       blendDstAlpha: THREE.OneFactor,
     })
     let points: THREE.Points | null = null
-    // The space behind the figure (stars, a galaxy, two planets), in the same dots.
+    // The space behind the figure (stars, a galaxy, a small planet), in the same dots.
     const space = createDotSpace(fragment, DOT_COLOR)
     scene.add(space.points)
     let spaceStart = 0
