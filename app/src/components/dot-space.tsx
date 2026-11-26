@@ -4,26 +4,24 @@ import { useReducedMotion } from 'motion/react'
 import { DOT_BLENDING, DOT_COLOR, DOT_FRAGMENT } from './dots'
 
 /**
- * The space behind the whole page, drawn in the same dots as the astronaut: a field of stars, two
- * tilted spiral galaxies and two small planets. A fixed, full-screen canvas (one WebGL draw call)
+ * The space behind the whole page, drawn in the same dots as the astronaut: a field of stars, a
+ * tilted spiral galaxy and a small planet. A fixed, full-screen canvas (one WebGL draw call)
  * that sits behind all the content; everything is dimmer and finer than the astronaut, so it
  * stays a background.
  *
- * - Scrolling moves it slowly (parallax). The stars wrap around, so they never run out. The first
- *   galaxy (upper left) and planet (upper right) belong to the intro; the second galaxy comes up
- *   with the projects and the second planet near the footer.
- * - The galaxies turn slowly; the planets spin and are lit from the upper left like the
- *   astronaut, so they show a bright limb and a dark side; the stars twinkle.
+ * - Scrolling moves it slowly (parallax). The stars wrap around, so they never run out and
+ *   continue behind every section. The galaxy (upper left) and the planet (upper right) belong
+ *   to the intro and drift up out of view with it.
+ * - The galaxy turns slowly; the planet spins and is lit from the upper left like the astronaut,
+ *   so it shows a bright limb and a dark side; the stars twinkle.
  * - It fades in dot by dot and shifts a little against the cursor.
  */
 
 const STAR = 0
 const GALAXY = 1
 const PLANET = 2
-const GALAXY_2 = 3
-const PLANET_2 = 4
 
-/** How fast things move with the page: stars 6–26% of the scroll, galaxies and planets 35%. */
+/** How fast things move with the page: stars 6–26% of the scroll, the galaxy and planet 35%. */
 const OBJECT_PARALLAX = 0.35
 
 const vertex = /* glsl */ `
@@ -48,7 +46,6 @@ const vertex = /* glsl */ `
     float kind = aMeta.x;
     float lum = aMeta.y;
     float rnd = aMeta.w;
-    bool second = kind > 2.5;
     vec3 p = vec3(0.0);
     float vis = 1.0;
     vec2 s = aCenter;
@@ -59,16 +56,16 @@ const vertex = /* glsl */ `
       s.y = mod(s.y - uScroll * (0.06 + 0.2 * depth), uWrap) - uWrap * 0.1;
       s.x -= uPar * 30.0 * depth;
     } else {
-      if (kind < 1.5 || (second && kind < 3.5)) {
+      if (kind < 1.5) {
         // Galaxy: a disc turning slowly, seen at a slant.
-        p = rotZ(aLocal, uTime * (second ? -0.024 : 0.03));
-        p = rotX(p, second ? 1.22 : 1.08);
-        p = rotZ(p, second ? 0.5 : -0.42);
+        p = rotZ(aLocal, uTime * 0.03);
+        p = rotX(p, 1.08);
+        p = rotZ(p, -0.42);
       } else {
         // Planet: spins about its own axis, lit from the upper left; the far side is hidden.
-        p = rotY(aLocal, uTime * (second ? 0.07 : 0.1));
+        p = rotY(aLocal, uTime * 0.1);
         p = rotX(p, -0.4);
-        p = rotZ(p, second ? 0.3 : -0.25);
+        p = rotZ(p, -0.25);
         vec3 n = normalize(p);
         float light = max(0.0, dot(n, normalize(vec3(-0.62, -0.5, 0.6))));
         vis = smoothstep(-0.04, 0.12, n.z);
@@ -99,27 +96,20 @@ function seeded(seed: number) {
 
 type Spot = { x: number; y: number; r: number }
 
-/**
- * Where things sit (css px; `y` is the place on screen before any scrolling). `maxScroll` is how
- * far the page scrolls: the second galaxy and planet are placed so they pass by further down.
- * On phones the astronaut is bottom right and the intro text is centred.
- */
-function place(vw: number, vh: number, maxScroll: number) {
-  const wide = vw >= 1024
-  // On screen at `screenY` once the page has scrolled `at` of the way, and never before the intro is left.
-  const later = (at: number, screenY: number) => Math.max(vh * 1.3, screenY * vh + OBJECT_PARALLAX * at * maxScroll)
-  const far = maxScroll > vh * 1.5
+/** Where things sit on screen before any scrolling (css px). On phones the astronaut is bottom right and the intro text is centred. */
+function place(vw: number, vh: number): { galaxy: Spot; planet: Spot } {
+  if (vw >= 1024)
+    return {
+      galaxy: { x: vw * 0.26, y: vh * 0.22, r: Math.min(vw * 0.17, vh * 0.27) },
+      planet: { x: vw * 0.9, y: vh * 0.165, r: vh * 0.034 },
+    }
   return {
-    galaxy: wide ? { x: vw * 0.26, y: vh * 0.22, r: Math.min(vw * 0.17, vh * 0.27) } : { x: vw * 0.32, y: vh * 0.17, r: Math.min(vw * 0.33, vh * 0.2) },
-    planet: wide ? { x: vw * 0.9, y: vh * 0.165, r: vh * 0.034 } : { x: vw * 0.84, y: vh * 0.24, r: vh * 0.016 },
-    // Late in the page, on the right: it comes up with the projects and ends above the footer.
-    galaxy2: far ? { x: vw * (wide ? 0.84 : 0.72), y: later(0.85, 0.4), r: wide ? Math.min(vw * 0.12, vh * 0.2) : Math.min(vw * 0.28, vh * 0.16) } : null,
-    // At the end of the page, to the left of the footer.
-    planet2: far ? { x: vw * (wide ? 0.16 : 0.14), y: later(1, 0.34), r: vh * (wide ? 0.042 : 0.02) } : null,
+    galaxy: { x: vw * 0.32, y: vh * 0.17, r: Math.min(vw * 0.33, vh * 0.2) },
+    planet: { x: vw * 0.84, y: vh * 0.24, r: vh * 0.016 },
   }
 }
 
-function build(vw: number, vh: number, maxScroll: number) {
+function build(vw: number, vh: number) {
   const center: number[] = []
   const local: number[] = []
   const meta: number[] = []
@@ -131,7 +121,7 @@ function build(vw: number, vh: number, maxScroll: number) {
     meta.push(kind, lum, size, rand())
   }
   const small = () => 0.5 + rand() * 0.4
-  const at = place(vw, vh, maxScroll)
+  const at = place(vw, vh)
   const wrap = vh * 1.3
 
   // Stars: sparse, most of them faint; a few bigger ones.
@@ -168,7 +158,6 @@ function build(vw: number, vh: number, maxScroll: number) {
     }
   }
   galaxy(GALAXY, at.galaxy, 3.7)
-  if (at.galaxy2) galaxy(GALAXY_2, at.galaxy2, 3.0)
 
   // Planet: dots at random on a sphere, with a few darker patches.
   const planet = (kind: number, o: Spot, patches: number) => {
@@ -184,7 +173,6 @@ function build(vw: number, vh: number, maxScroll: number) {
     }
   }
   planet(PLANET, at.planet, 4)
-  if (at.planet2) planet(PLANET_2, at.planet2, 6)
 
   const geo = new THREE.BufferGeometry()
   geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array((meta.length / 4) * 3), 3))
@@ -221,21 +209,20 @@ export function DotSpace() {
     points.frustumCulled = false
     scene.add(points)
 
-    // Rebuild when the width, the height (by more than a phone's address bar) or the page length changes.
-    const built = { vw: 0, vh: 0, max: -1 }
+    // Rebuild when the width changes, or the height by more than a phone's address bar.
+    const built = { vw: 0, vh: 0 }
     const fit = () => {
       const vw = window.innerWidth
       const vh = window.innerHeight
-      const max = Math.max(0, document.documentElement.scrollHeight - vh)
       const dpr = Math.min(2, window.devicePixelRatio || 1)
       renderer.setPixelRatio(dpr)
       renderer.setSize(vw, vh, false)
       uniforms.uView.value.set(vw, vh)
       uniforms.uDpr.value = dpr
       uniforms.uDot.value = vw >= 1024 ? 2.4 : 2
-      if (vw === built.vw && Math.abs(vh - built.vh) < 150 && Math.abs(max - built.max) < 60) return
-      Object.assign(built, { vw, vh, max })
-      const b = build(vw, vh, max)
+      if (vw === built.vw && Math.abs(vh - built.vh) < 150) return
+      Object.assign(built, { vw, vh })
+      const b = build(vw, vh)
       points.geometry.dispose()
       points.geometry = b.geo
       uniforms.uWrap.value = b.wrap
@@ -247,8 +234,6 @@ export function DotSpace() {
       fitT = window.setTimeout(fit, 200)
     }
     window.addEventListener('resize', refit)
-    const ro = new ResizeObserver(refit)
-    ro.observe(document.body)
 
     let nx = 0
     const onMove = (e: PointerEvent) => {
@@ -294,7 +279,6 @@ export function DotSpace() {
       window.removeEventListener('resize', refit)
       window.removeEventListener('pointermove', onMove)
       document.removeEventListener('visibilitychange', onVis)
-      ro.disconnect()
       points.geometry.dispose()
       material.dispose()
       renderer.dispose()
