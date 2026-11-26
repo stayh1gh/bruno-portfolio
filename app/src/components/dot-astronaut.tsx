@@ -288,7 +288,7 @@ const vertex = /* glsl */ `
     float flight = 1.0 - open;
     q.x = mix(-40.0 - h1 * uView.x * 0.3, target.x, gx);
     // The same wave for every dot (phase from position and time only), so the ray moves as one.
-    float wave = sin(q.x * 0.0062 - uTime * 1.6) * 30.0 + sin(q.x * 0.0029 - uTime * 0.85) * 16.0;
+    float wave = sin(q.x * 0.0082 - uTime * 2.0) * 62.0 + sin(q.x * 0.0037 - uTime * 1.0) * 28.0;
     float across = (h2 + h3 - 1.0) * 30.0; // thin ribbon, densest along its middle
     q.y = mix(uStream.y + wave + across, target.y, open);
 
