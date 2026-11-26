@@ -161,7 +161,7 @@ export function Story() {
         <DotAstronaut scroll={scrollYProgress} onReady={() => setReady(true)} reduce={!!reduce} />
 
         {/* Soft dark wash on the text side so the type stays readable. */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(65%_75%_at_20%_50%,rgb(10_11_8/0.45),transparent_72%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(65%_75%_at_20%_50%,rgb(6_8_12/0.45),transparent_72%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
 
         {/* Same container as the navbar and work section; lines centred in it. */}
         <motion.div aria-hidden className="mx-auto w-full max-w-[2200px] origin-center px-5 md:px-8 xl:px-24" style={{ opacity: exitOpacity, scale: exitScale, filter: exitBlur }}>

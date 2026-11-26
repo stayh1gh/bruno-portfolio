@@ -23,9 +23,9 @@
 /* Palette: black background, shades of blue (Bruno's pick, 2026-11-24). Text accents: electric blue (a) and ice blue (b). */
 :root {
   --bg: #000000;
-  --fg: #f3ecd6;
-  --muted: #b4ab92;
-  --subtle: #7a725f;
+  --fg: #e8eef8;
+  --muted: #9aa6ba;
+  --subtle: #6e788c;
   --line: rgb(170 190 255 / 0.11);
   --card: #0b0c12;
   --accent: #5b86ff;

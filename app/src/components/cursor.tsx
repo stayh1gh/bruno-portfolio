@@ -75,8 +75,8 @@ export function Cursor() {
 
   // A frosted-glass ring: see-through, softly blurring what's under it.
   const ring = {
-    default: { size: 24, fill: 'rgb(243 236 214 / 0.08)', border: 'rgb(243 236 214 / 0.4)' },
-    link: { size: 40, fill: 'rgb(243 236 214 / 0.14)', border: 'rgb(243 236 214 / 0.55)' },
+    default: { size: 24, fill: 'rgb(232 238 248 / 0.08)', border: 'rgb(232 238 248 / 0.4)' },
+    link: { size: 40, fill: 'rgb(232 238 248 / 0.14)', border: 'rgb(232 238 248 / 0.55)' },
     view: { size: 76, fill: 'rgb(91 134 255 / 0.55)', border: 'rgb(185 213 255 / 0.6)' },
   }[mode]
 
