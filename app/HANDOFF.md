@@ -1,6 +1,7 @@
-# Handoff — portfolio motion redesign (updated 2026-11-26)
+# Handoff — portfolio motion redesign (updated 2026-11-26, evening)
 
-State on `claude/motion-redesign` (last saved snapshot: Option C, `629275a`) (draft PR stayh1gh/bruno-portfolio#1).
+Current state: **Option D** (dot astronaut) on `claude/motion-redesign` (draft PR stayh1gh/bruno-portfolio#1),
+also saved as the snapshot branch `claude/portfolio-option-d`.
 Everything is committed and pushed. Never merge to `main` without Bruno.
 
 ## Where things are
@@ -9,9 +10,10 @@ Everything is committed and pushed. Never merge to `main` without Bruno.
 | --- | --- |
 | Working branch | `claude/motion-redesign` → draft PR #1 |
 | Snapshot: before the astronaut ("Option A") | branch `claude/portfolio-option-a` (`a086d89`) |
-| Snapshot: first astronaut version ("Option B") | branch `claude/portfolio-option-b` (`12455aa`), older than the current branch |
-| Snapshot: astronaut avatar + simple timeline ("Option C") | branch `claude/portfolio-option-c` |
-| App | `app/` (React 19 + Vite + Tailwind v4 + Motion + Lenis) |
+| Snapshot: first astronaut version ("Option B") | branch `claude/portfolio-option-b` (`12455aa`) |
+| Snapshot: illustrated astronaut + astronaut avatar + simple timeline ("Option C") | branch `claude/portfolio-option-c` (`629275a`) |
+| Snapshot: dot astronaut on a grainy background ("Option D", current) | branch `claude/portfolio-option-d` |
+| App | `app/` (React 19 + Vite + Tailwind v4 + Motion + Lenis + three.js) |
 | Design | Figma "Bruno — Portfolio 2026" (`Pzut3K1Rp04QZwguSdJLUK`), Direction B, cards at node `9:297` |
 | Local worktree (Bruno's Mac) | `personal/portfolio-worktrees/motion-redesign`; the root portfolio checkout is on another branch with uncommitted work, don't touch it |
 
@@ -23,20 +25,27 @@ npm install
 npm run dev -- --port 4185
 ```
 
-## What the page is now
+## What the page is now (Option D)
 
 1. **Intro (story)** — `src/components/story.tsx`, copy in `src/data.ts` (`STORY`).
-   - Elegant fade-in: space first, then the astronaut un-blurs in, then the text types at an even pace (23 letters/s, no pauses, no caret).
-   - One paragraph, pure white `#FFFFFF`, sans only; bold on "Bruno Paradas", "design, build, and ship", "Buzzfeed".
-   - Text left on desktop (max 54% width), centred on phones. Scrolling fast-forwards the typing; the text is pinned for 150svh.
-   - Scroll hint: a floating mouse icon only.
-   - Astronaut: full body (`public/images/story/astronaut-body*.webp`), on the right, floats; NOT pinned, so it scrolls up and reveals the legs.
-2. **Background** — `src/components/space-backdrop.tsx`: one tall painting (`space-long*.webp`) behind the whole page, scrolling with it; darker from the work section down (CSS gradient), page colour `#050509` below it. Twinkling stars + comets on a fixed canvas (`src/components/galaxy.tsx`, `overlay` mode).
-3. **Work** — `src/components/work.tsx`: cards match Figma `9:297` (image, 12px gap, footer panel, tags, company mark). Cards slide in from the left in sequence; image zooms slowly with scroll. Heading "What I've **built**" white sans.
-4. **Footer** — avatar of the intro astronaut with Bruno's moustache and goatee (`public/images/avatar.webp`), floating; "Want to build something? **Let's talk**". Credit line "Space illustrations: Magnific".
-5. **Overlays** — About and Other work; same white-sans treatment. About's timeline (`about.tsx`): a straight line through each job's dot; a small glowing point travels down it at the panel's reading line (72%), the line fills behind it and dots light up as it passes. Reduced motion shows it fully lit.
-6. **Global** — custom cursor (frosted-glass ring, "View"/"Soon" disc on cards) `src/components/cursor.tsx`; Lenis smooth scroll `src/lib/smooth-scroll.ts`; container up to 2200px with 96px side padding on desktop; text colour `--fg` is a warm off-white everywhere except the white story/headings.
-7. **Music** — `src/lib/music.ts`: quiet loop (8% volume, starts at 0:23) from the first click; volume icon button bottom-left (`sound-toggle.tsx`, Lucide `Volume2`/`VolumeX`).
+   - Text: one paragraph, pure white `#FFFFFF`, sans only; bold on "Bruno Paradas", "design, build, and ship", "Buzzfeed". Typed at an even pace (23 letters/s, no pauses, no caret), starting shortly after the dots begin to arrive. Left on desktop (max 54% width), centred on phones. Pinned for 150svh; scrolling fast-forwards the typing. Scroll hint: a floating mouse icon only.
+   - **Dot astronaut** — `src/components/dot-astronaut.tsx` (three.js Points + shader, one draw call, screen-pixel space):
+     - Intro: the dots blow in from off-screen left like a ray of sand carried by the wind (~3.5s), finer/dimmer in flight, then settle into the figure. No loading ring any more.
+     - Dots are scattered at random inside `public/images/story/astronaut-body.webp` (1304×2311, transparent); the drawing's dark line work stays mostly empty. Density varies (`SPOTS` / `detailWeight`): densest on the helmet, richer on the hands, chest panel and outline, sparser on legs/backpack. `SPACING` (6.2px) sets the overall amount. Most dots tiny, ~12% bigger ones that twinkle.
+     - Glow: premultiplied additive blending (soft core + halo), so dense areas shine. Colour `#eef2dc`.
+     - Fake depth (distance from the silhouette edge): front-lit brightness, gentle turn toward the cursor + idle sway, soft perspective.
+     - No cursor light/push any more (removed at Bruno's request).
+     - On scroll out of the intro: the figure rises, turns and its dots fly off to the left.
+   - Earlier experiments Bruno rejected: a sparse "silhouette only" version, an empty visor, and a version with a filled plain visor. He preferred the stipple that follows the illustration, now with variable density.
+2. **Background** — `src/components/space-backdrop.tsx`: plain very dark olive-black `#12140f` (taken from the reference video) behind the whole page, with a fixed SVG film grain (`@keyframes grain` in `index.css`, 7% opacity). The space painting, stars and comets were removed (and `galaxy.tsx` deleted).
+3. **Work** — `src/components/work.tsx`: cards match Figma `9:297`; they slide in from the left in sequence; image zooms slowly with scroll. Heading "What I've **built**" white sans.
+4. **Footer** — astronaut avatar with Bruno's moustache and goatee (`public/images/avatar.webp`), floating; "Want to build something? **Let's talk**". Credit line "Space illustrations: Magnific".
+5. **Overlays** — About and Other work, white sans. About's timeline: a straight line with a glowing point that travels down as you scroll.
+6. **Global** — custom cursor (frosted-glass ring, "View"/"Soon" disc on cards); Lenis smooth scroll; container up to 2200px with 96px side padding on desktop.
+7. **Music** — `src/lib/music.ts`: quiet loop (8% volume, starts at 0:23) from the first click; volume icon button bottom-left.
+
+Reference for the dot look: motionsites.ai `?prompt=dot-portrait` (preview video
+`https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/noa-made-of-dots.mp4`).
 
 ## Not in git (on purpose)
 
@@ -44,51 +53,18 @@ npm run dev -- --port 4185
 
 ## Images (Magnific, free plan)
 
-All generated or taken from Magnific's free stock and credited in the footer. Generated by AI from references:
-- Astronaut: stock "Anime style character in space" (id 122494274) → full-body version generated; background removed locally (flood fill on the plain dark background).
-- Background: generated from Magnific's "Watercolor colorful galaxy background" (vector id 21935023), then darkened (levels) in Python.
-- Avatar (Option C): the astronaut character (helmet on) with a moustache and goatee, generated with the astronaut stock image as the only reference; no photo of Bruno used.
-- Free plan limits: images reset at 00:00 UTC; background removal, upscale and expand need a paid plan or the daily free use.
+- Astronaut: stock "Anime style character in space" (id 122494274) → full-body version generated; background removed locally.
+- Avatar (Option C onward): the astronaut character with a moustache and goatee, generated from the astronaut stock image only.
+- Magnific MCP works in this account (Free plan: 20 images/day, no credits; 3D needs credits, so the dot astronaut uses fake depth).
 
-## Option D — dot astronaut (first version built, 2026-11-26)
+## Ideas not done yet
 
-Built with the fake-depth route (no Magnific credits for 3D): `src/components/dot-astronaut.tsx`, three.js
-points sampled from `astronaut-body.webp` (dark line work left empty), depth from distance to the silhouette
-edge, 0→100 counter in a ring, then the dots gather; cursor pushes dots away; on scroll the figure rises,
-turns and the dots fly off to the left. The story starts typing when the dots start gathering.
-Option C (`claude/portfolio-option-c`) is the fallback with the illustrated astronaut.
-
-Original plan:
-
-Bruno wants to try a new intro: the astronaut rebuilt as a cloud of thousands of small dots, like the
-"Dot Portrait" reference on motionsites.ai (`?prompt=dot-portrait`, preview video `noa-made-of-dots.mp4`):
-cream/white dots on near-black, a 0→100 counter in a ring while it loads, then the dots gather into the
-figure; it looks like a 3D scan (dots at different depths).
-
-Decided with Bruno (2026-11-26):
-- Use the anime astronaut as a **reference only**, no need to copy it exactly.
-- **Real 3D first**: make a 3D model of an astronaut with Magnific's image-to-3D (Tripo H3.1 / Tripo P1 /
-  Trellis 2; showed 580–1,190 credits per run, so show Bruno the cost before generating), then sample
-  points on its surface (three.js `MeshSurfaceSampler`) and render them as dots.
-  Suggested input: generate a fresh full-body anime astronaut in Magnific first (front view, neutral pose,
-  plain background), with the stock astronaut (Magnific stock "anime style character in space") as style ref.
-- **If the 3D model looks bad, fall back to fake depth**: sample `public/images/story/astronaut-body.webp`
-  (1304×2311, transparent) into dots and invent depth from the silhouette (distance from the edge) + shading.
-- **Key interaction**: when the user scrolls out of the first section, the dots **fly away to the left**
-  (real 3D lets the figure turn as it goes).
-- Also: dots drift away from the cursor and drift back; monochrome cream dots; the dot astronaut replaces
-  the illustrated one in the intro only (keep the painted space background); adding three.js is fine.
-- Build on `claude/motion-redesign`; Option C stays as the fallback.
-
-Magnific access: the Magnific MCP (`https://mcp.magnific.com`, OAuth) is the preferred route. In the old
-account it was added but its tools wouldn't load, so Bruno moved to the account where it works. Browser
-fallback: magnific.com/app/tools/image-to-3d (needs login); uploading local files from the browser pane
-didn't work, so pick inputs from Magnific's own creations/stock.
+- Real 3D for the dot astronaut (Magnific image-to-3D, 580–1,190 credits per run) → sample its surface with `MeshSurfaceSampler`.
+- Phone check of the dot astronaut + grain background.
 
 ## Open items
 
 - Real copy for card one-liners and job summaries; videos for the cards.
 - "Other work" filter list: Figma says "Mobile", site says "Interaction" (kept on purpose for now).
-- Phone layout of the astronaut/story after the latest changes wasn't fully rechecked.
 - Vercel build setup before this can replace the live static site.
 - Long story copy (`STORY_LONG`) is saved for the About overlay, not used yet.
