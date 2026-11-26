@@ -6,8 +6,8 @@ import { AnimatePresence, motion, type MotionValue } from 'motion/react'
  * Option D: the intro astronaut rebuilt as a cloud of small cream dots (in the spirit of
  * motionsites.ai's "Dot Portrait").
  *
- * - The dots are sampled from the illustrated astronaut's silhouette (`astronaut-body.webp`):
- *   sparse and simple, denser along the edges, no shading; the visor is plain glass (no face).
+ * - The dots are sampled from the illustrated astronaut (`astronaut-body.webp`): one dot per
+ *   small cell inside the figure, skipping the dark line work so the drawing stays readable.
  * - Depth is invented ("fake 3D"): the further a dot is from the silhouette edge, the closer it
  *   sits to the viewer. The figure turns gently, so the dots slide past each other like a 3D scan.
  * - While it loads, a 0→100 counter runs in a ring; then the dots gather into the figure.
@@ -42,27 +42,8 @@ function layout(vw: number, vh: number) {
   return { left: vw * 1.12 - w, top: vh * 0.6, w, h, rise: vh * 0.45 }
 }
 
-// The helmet's visor glass in the source image (px): an ellipse, rotated. Inside it the dots are
-// plain (no face, just glass); its rim gets bright dots, like the glasses in the reference.
-const VISOR = { cx: 552, cy: 330, rx: 232, ry: 178, rot: -0.36 }
-function visorF(x: number, y: number) {
-  const dx = x - VISOR.cx
-  const dy = y - VISOR.cy
-  const c = Math.cos(-VISOR.rot)
-  const s = Math.sin(-VISOR.rot)
-  const u = (dx * c - dy * s) / VISOR.rx
-  const v = (dx * s + dy * c) / VISOR.ry
-  return u * u + v * v // < 1 inside the glass
-}
-
-/**
- * Sample the illustration into a sparse, simple dot cloud (like motionsites' "Dot Portrait"):
- * random dots inside the silhouette, denser along its edges and around the visor rim, thin
- * inside; no shading. `cellCss` is the sampling grid in css px, `spacing` the target gap
- * between dots inside the figure.
- */
-function sampleDots(img: HTMLImageElement, scale: number, spacing: number) {
-  const step = Math.max(2, 1.5 / scale) // grid cell in source px (~1.5 css px)
+/** Sample the illustration into dots: position (source px), depth 0–1, brightness 0–1, random 0–1. */
+function sampleDots(img: HTMLImageElement, step: number) {
   const gw = Math.floor(IMG_W / step)
   const gh = Math.floor(IMG_H / step)
   const cv = document.createElement('canvas')
@@ -72,35 +53,26 @@ function sampleDots(img: HTMLImageElement, scale: number, spacing: number) {
   ctx.drawImage(img, 0, 0, gw, gh)
   const px = ctx.getImageData(0, 0, gw, gh).data
 
-  // Inside = part of the figure (the visor glass included: it's filled with plain dots).
-  const inside = new Uint8Array(gw * gh)
-  for (let y = 0; y < gh; y++)
-    for (let x = 0; x < gw; x++) {
-      const i = y * gw + x
-      inside[i] = px[i * 4 + 3] > 128 ? 1 : 0
-    }
-
-  // Distance (in cells) from each inside cell to the nearest outside cell: two-pass chamfer.
+  // Distance (in cells) from each inside cell to the silhouette edge: two-pass chamfer.
+  const INF = 1e9
   const dist = new Float32Array(gw * gh)
-  for (let i = 0; i < gw * gh; i++) dist[i] = inside[i] ? 1e9 : 0
+  for (let i = 0; i < gw * gh; i++) dist[i] = px[i * 4 + 3] > 128 ? INF : 0
   const at = (x: number, y: number) => (x < 0 || y < 0 || x >= gw || y >= gh ? 0 : dist[y * gw + x])
   for (let y = 0; y < gh; y++)
     for (let x = 0; x < gw; x++) {
       const i = y * gw + x
-      if (!dist[i]) continue
+      if (dist[i] === 0) continue
       dist[i] = Math.min(dist[i], at(x - 1, y) + 1, at(x, y - 1) + 1, at(x - 1, y - 1) + 1.414, at(x + 1, y - 1) + 1.414)
     }
   let maxD = 1
   for (let y = gh - 1; y >= 0; y--)
     for (let x = gw - 1; x >= 0; x--) {
       const i = y * gw + x
-      if (!dist[i]) continue
+      if (dist[i] === 0) continue
       dist[i] = Math.min(dist[i], at(x + 1, y) + 1, at(x, y + 1) + 1, at(x + 1, y + 1) + 1.414, at(x - 1, y + 1) + 1.414)
       maxD = Math.max(maxD, dist[i])
     }
 
-  const cellCss = step * scale
-  const base = (cellCss * cellCss) / (spacing * spacing) // chance per cell for one dot per spacing²
   const pos: number[] = []
   const depth: number[] = []
   const lum: number[] = []
@@ -108,23 +80,12 @@ function sampleDots(img: HTMLImageElement, scale: number, spacing: number) {
   for (let y = 0; y < gh; y++)
     for (let x = 0; x < gw; x++) {
       const i = y * gw + x
-      if (!inside[i]) continue
-      const sx = (x + Math.random()) * step
-      const sy = (y + Math.random()) * step
-      const edgeCss = dist[i] * cellCss
-      const f = visorF(sx, sy)
-      const rim = f > 0.86 && f < 1.16 // the visor's edge
-      const glass = f <= 0.86 // inside the visor: plain dots, no face
+      if (px[i * 4 + 3] < 128) continue
       const l = (0.2126 * px[i * 4] + 0.7152 * px[i * 4 + 1] + 0.0722 * px[i * 4 + 2]) / 255
-      const line = !glass && l < 0.16 // the drawing's main line work, kept faintly so the shape reads
-      let w = 0.5 + 2.4 * Math.exp(-edgeCss / 5)
-      if (rim) w = 2.6
-      else if (glass) w = 0.7
-      else if (line) w += 0.35
-      if (Math.random() > base * w) continue
-      pos.push(sx, sy)
+      if (l < 0.16) continue // dark line work stays empty, so the drawing reads
+      pos.push((x + 0.5 + (Math.random() - 0.5) * 0.8) * step, (y + 0.5 + (Math.random() - 0.5) * 0.8) * step)
       depth.push(Math.sqrt(dist[i] / maxD))
-      lum.push(rim ? 1 : glass ? 0.3 + Math.random() * 0.45 : edgeCss < 6 ? 0.8 + Math.random() * 0.2 : 0.35 + Math.random() * 0.55)
+      lum.push(Math.min(1, l * 1.15))
       rnd.push(Math.random())
     }
   return { pos: new Float32Array(pos), depth: new Float32Array(depth), lum: new Float32Array(lum), rnd: new Float32Array(rnd) }
@@ -190,7 +151,7 @@ const vertex = /* glsl */ `
     q.y += (aRnd - 0.5) * ee * 280.0;
 
     gl_Position = vec4(q.x / uView.x * 2.0 - 1.0, 1.0 - q.y / uView.y * 2.0, 0.0, 1.0);
-    gl_PointSize = uDot * uDpr * (0.7 + aLum * 0.6) * persp;
+    gl_PointSize = uDot * uDpr * (0.6 + aLum * 0.75) * persp;
     vA = (0.25 + aLum * 0.75) * g * (1.0 - smoothstep(0.6, 1.0, e)) * (0.7 + 0.3 * aDepth);
   }
 `
@@ -259,8 +220,9 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       renderer.setSize(vw, vh, false)
       lay = layout(vw, vh)
       const scale = lay.h / IMG_H
-      // Sparse: about one dot every 5.4 css px inside the figure (denser on the edges).
-      const s = sampleDots(img, scale, vw >= 1024 ? 5.4 : 4.8)
+      // About one dot every 3.4 css px on screen.
+      const step = Math.max(4, 3.4 / scale)
+      const s = sampleDots(img, step)
       const geo = new THREE.BufferGeometry()
       geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(s.rnd.length * 3), 3))
       geo.setAttribute('aPos', new THREE.BufferAttribute(s.pos, 2))
@@ -281,7 +243,7 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       uniforms.uScale.value = scale
       uniforms.uCenter.value.set(lay.left + lay.w / 2, lay.top + lay.h * 0.4)
       uniforms.uDepth.value = lay.w * 0.35
-      uniforms.uDot.value = vw >= 1024 ? 2.1 : 1.8
+      uniforms.uDot.value = vw >= 1024 ? 2.4 : 2
     }
 
     // Pointer: smoothed, so pushed dots drift back when the cursor moves on.
