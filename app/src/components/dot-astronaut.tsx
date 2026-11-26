@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import type { MotionValue } from 'motion/react'
+import { createDotSpace } from './dot-space'
 
 /**
  * Option D: the intro astronaut as a glowing cloud of dots, after motionsites.ai's "Dot Portrait".
@@ -21,7 +22,9 @@ import type { MotionValue } from 'motion/react'
  * - Hovering: the dots drift away from the cursor and drift back.
  * - Scrolling out of the intro, the figure rises, turns and its dots fly off to the left.
  *
- * One WebGL draw call (three.js Points + a small shader), in screen pixels.
+ * Behind it, in the same dots: stars, a spiral galaxy and two planets (dot-space.ts).
+ *
+ * Two WebGL draw calls (three.js Points + small shaders), in screen pixels.
  */
 
 const SRC = '/images/story/astronaut-body.webp'
@@ -385,6 +388,10 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       blendDstAlpha: THREE.OneFactor,
     })
     let points: THREE.Points | null = null
+    // The space behind the figure (stars, a galaxy, two planets), in the same dots.
+    const space = createDotSpace(fragment, DOT_COLOR)
+    scene.add(space.points)
+    let spaceStart = 0
     let img: HTMLImageElement | null = null
     let lay = layout(1, 1)
 
@@ -413,6 +420,7 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
         points.frustumCulled = false
         scene.add(points)
       }
+      space.resize(vw, vh, dpr)
       uniforms.uView.value.set(vw, vh)
       uniforms.uDpr.value = dpr
       uniforms.uOrigin.value.set(lay.left, lay.top)
@@ -452,6 +460,7 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
         if (disposed) return
         img = image
         build()
+        spaceStart = performance.now()
         if (reduce) {
           onReadyRef.current()
           return
@@ -485,6 +494,7 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       rot += ((reduce ? 0 : nx * 0.3 + Math.sin(time * 0.25) * 0.1) - rot) * (1 - Math.pow(0.05, dt))
       uniforms.uRot.value = rot
       uniforms.uTime.value = reduce ? 0 : time
+      space.update(reduce ? 0 : time, reduce ? 1 : spaceStart ? Math.min(1, (now - spaceStart) / 2800) : 0, s, reduce ? 0 : rot)
 
       if (points) renderer.render(scene, camera)
       raf = requestAnimationFrame(frame)
@@ -523,6 +533,7 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       document.removeEventListener('pointerleave', onLeave)
       document.removeEventListener('visibilitychange', onVis)
       points?.geometry.dispose()
+      space.dispose()
       material.dispose()
       renderer.dispose()
     }
