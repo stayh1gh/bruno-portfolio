@@ -7,13 +7,17 @@ import type { MotionValue } from 'motion/react'
  *
  * - Intro: the dots blow in from off-screen left, like a ray of sand carried by the wind, then
  *   settle into the astronaut.
- * - Dots are scattered at random inside the illustrated astronaut (`astronaut-body.webp`), with a
- *   varying density: concentrated around the helmet, the hands and chest panel and along the
- *   outline; sparser on the legs and backpack. Dark line work stays mostly empty.
+ * - Dots are scattered at random inside the illustrated astronaut (`astronaut-body.webp`). Most of
+ *   them sit on the drawing's contours (line work, shadow edges, the silhouette), which read as
+ *   bright dotted lines, as in the reference; a dim fill lies between them, denser on the helmet.
  *   Most dots are tiny, a few are bigger and sparkle.
+ * - The visor is dark glass: the face in the drawing is masked out (`VISOR`), leaving a bright rim,
+ *   a few dim dots and one soft reflection.
+ * - Gloomy, low-key light, baked per dot: lit from the upper left, right and under sides in
+ *   shadow, legs sinking into the dark; a slow shadow drifts across the figure.
  * - They glow: soft halos added together (additive light), so dense areas shine.
- * - Fake depth: dots further inside the silhouette sit closer and are brighter (front-lit); the
- *   figure turns gently toward the cursor, so the dots slide past each other like a 3D scan.
+ * - Fake depth: dots further inside the silhouette sit closer; the figure turns gently toward the
+ *   cursor, so the dots slide past each other like a 3D scan.
  * - Scrolling out of the intro, the figure rises, turns and its dots fly off to the left.
  *
  * One WebGL draw call (three.js Points + a small shader), in screen pixels.
@@ -22,8 +26,8 @@ import type { MotionValue } from 'motion/react'
 const SRC = '/images/story/astronaut-body.webp'
 const IMG_W = 1304
 const IMG_H = 2311
-const DOT_COLOR = new THREE.Color('#eef2dc') // warm cream with a faint green, like the reference
-const SPACING = 6.2 // average gap between dots, css px (it varies: denser on the helmet)
+const DOT_COLOR = new THREE.Color('#e6ebd8') // pale cream with a faint green, like the reference
+const SPACING = 4.1 // average gap between dots, css px (it varies: denser on contours and the helmet)
 
 type Props = {
   /** 0 → 1 while the intro is pinned. */
@@ -49,13 +53,13 @@ function layout(vw: number, vh: number) {
  * the helmet most of all, then the hands and the chest panel; the legs get fewer.
  */
 const SPOTS = [
-  { x: 560, y: 370, r: 290, w: 2.4 }, // helmet
-  { x: 600, y: 760, r: 170, w: 0.7 }, // chest panel
-  { x: 90, y: 1110, r: 130, w: 0.8 }, // left glove
-  { x: 1140, y: 1170, r: 130, w: 0.8 }, // right glove
+  { x: 560, y: 370, r: 290, w: 1.7 }, // helmet
+  { x: 600, y: 760, r: 170, w: 0.6 }, // chest panel
+  { x: 90, y: 1110, r: 130, w: 0.6 }, // left glove
+  { x: 1140, y: 1170, r: 130, w: 0.6 }, // right glove
 ]
 function detailWeight(x: number, y: number) {
-  let w = y > 1450 ? 0.45 : 0.7 // legs sparser
+  let w = y > 1450 ? 0.5 : 0.75 // legs sparser
   for (const s of SPOTS) {
     const dx = x - s.x
     const dy = y - s.y
@@ -63,7 +67,41 @@ function detailWeight(x: number, y: number) {
   }
   return w
 }
+const FILL = 0.5 // how much of the weight goes to the dim fill between contours
+const EDGE = 2.5 // ...and to the contour lines
 const MAX_WEIGHT = 3.6
+
+/**
+ * The visor glass, outlined in source px. The drawing has a face in there; everything inside this
+ * outline is ignored and replaced by dark glass: a bright rim, a few dim dots and one soft reflection.
+ */
+const VISOR: [number, number][] = [
+  [338, 214], [352, 188], [385, 168], [430, 158], [500, 156], [580, 162], [650, 178], [705, 200],
+  [733, 228], [741, 270], [738, 320], [728, 352], [690, 370], [640, 392], [600, 418], [570, 440],
+  [520, 452], [470, 456], [430, 448], [405, 430], [385, 400], [362, 350], [345, 290], [337, 245],
+]
+const VISOR_BOX = { x0: 315, y0: 135, x1: 765, y1: 480 }
+const VISOR_C = { x: 540, y: 305 }
+const RIM = 6 // half-width of the visor's rim line, source px
+/** Signed distance to the visor outline: > 0 inside the glass. */
+function visorDistance(x: number, y: number) {
+  let inside = false
+  let best = 1e9
+  for (let i = 0, j = VISOR.length - 1; i < VISOR.length; j = i++) {
+    const [ax, ay] = VISOR[j]
+    const [bx, by] = VISOR[i]
+    if (ay > y !== by > y && x < ((bx - ax) * (y - ay)) / (by - ay) + ax) inside = !inside
+    const ex = bx - ax
+    const ey = by - ay
+    const t = Math.min(1, Math.max(0, ((x - ax) * ex + (y - ay) * ey) / (ex * ex + ey * ey)))
+    best = Math.min(best, Math.hypot(x - ax - ex * t, y - ay - ey * t))
+  }
+  return inside ? best : -best
+}
+const smooth = (a: number, b: number, v: number) => {
+  const t = Math.min(1, Math.max(0, (v - a) / (b - a)))
+  return t * t * (3 - 2 * t)
+}
 
 /**
  * Scatter dots at random inside the figure. Returns source-px positions plus per-dot depth
@@ -79,6 +117,28 @@ function sampleDots(img: HTMLImageElement, scale: number, vw: number) {
   const ctx = cv.getContext('2d', { willReadFrequently: true })!
   ctx.drawImage(img, 0, 0, pw, ph)
   const px = ctx.getImageData(0, 0, pw, ph).data
+
+  // Luminance of the drawing (0 outside the figure), with the face behind the visor painted over.
+  const lumMap = new Float32Array(pw * ph)
+  for (let i = 0; i < pw * ph; i++)
+    lumMap[i] = px[i * 4 + 3] > 128 ? (0.2126 * px[i * 4] + 0.7152 * px[i * 4 + 1] + 0.0722 * px[i * 4 + 2]) / 255 : 0
+  const visor = new Float32Array(pw * ph).fill(-1e3) // signed distance to the visor outline, near it
+  for (let y = VISOR_BOX.y0 >> 1; y < VISOR_BOX.y1 >> 1; y++)
+    for (let x = VISOR_BOX.x0 >> 1; x < VISOR_BOX.x1 >> 1; x++) {
+      const sd = visorDistance(x * 2 + 1, y * 2 + 1)
+      visor[y * pw + x] = sd
+      if (sd > -RIM) lumMap[y * pw + x] = 0.5
+    }
+
+  // Contours: where the drawing changes (its line work, the edges of shadows, the silhouette).
+  const edgeMap = new Float32Array(pw * ph)
+  for (let y = 1; y < ph - 1; y++)
+    for (let x = 1; x < pw - 1; x++) {
+      const i = y * pw + x
+      const gx = lumMap[i - pw + 1] + 2 * lumMap[i + 1] + lumMap[i + pw + 1] - lumMap[i - pw - 1] - 2 * lumMap[i - 1] - lumMap[i + pw - 1]
+      const gy = lumMap[i + pw - 1] + 2 * lumMap[i + pw] + lumMap[i + pw + 1] - lumMap[i - pw - 1] - 2 * lumMap[i - pw] - lumMap[i - pw + 1]
+      edgeMap[i] = smooth(0.3, 1.5, Math.hypot(gx, gy))
+    }
 
   // Depth: distance to the silhouette edge on a coarse grid (two-pass chamfer).
   const G = 8 // pixels of the half-res image per grid cell
@@ -112,7 +172,6 @@ function sampleDots(img: HTMLImageElement, scale: number, vw: number) {
   const insideFrac = inside / (px.length / 16)
   const areaCss = IMG_W * IMG_H * scale * scale * insideFrac
   const target = Math.round(areaCss / ((vw >= 1024 ? SPACING : SPACING * 0.85) ** 2))
-  // (Density varies by `detailWeight`; the total stays about area / spacing².)
 
   const pos = new Float32Array(target * 2)
   const depth = new Float32Array(target)
@@ -121,25 +180,50 @@ function sampleDots(img: HTMLImageElement, scale: number, vw: number) {
   const rnd = new Float32Array(target)
   let n = 0
   let tries = 0
-  while (n < target && tries < target * 40) {
+  while (n < target && tries < target * 80) {
     tries++
     const x = Math.random() * pw
     const y = Math.random() * ph
-    const k = ((y | 0) * pw + (x | 0)) * 4
-    if (px[k + 3] < 128) continue
-    const l = (0.2126 * px[k] + 0.7152 * px[k + 1] + 0.0722 * px[k + 2]) / 255
-    if (l < 0.16 && Math.random() > 0.12) continue // line work: mostly empty
-    const dRaw = dist[Math.min(gh - 1, (y / G) | 0) * gw + Math.min(gw - 1, (x / G) | 0)]
-    const edge = Math.exp(-dRaw / 2.2) // close to the outline
-    const w = (detailWeight(x * 2, y * 2) + 0.9 * edge) * (0.45 + 0.55 * l)
+    const i = (y | 0) * pw + (x | 0)
+    if (px[i * 4 + 3] < 128) continue
+    const sx = x * 2
+    const sy = y * 2
+    const gx = Math.min(gw - 2, Math.max(1, (x / G) | 0))
+    const gy = Math.min(gh - 2, Math.max(1, (y / G) | 0))
+    const dRaw = dist[gy * gw + gx]
+
+    // Low-key light from the upper left: the figure bulges toward the viewer (depth), so its
+    // upper-left flanks catch the light and the right and under sides fall into shadow.
+    const nx = dist[gy * gw + gx - 1] - dist[gy * gw + gx + 1]
+    const ny = dist[(gy - 1) * gw + gx] - dist[(gy + 1) * gw + gx]
+    const light = Math.max(0, (nx * -0.62 + ny * -0.64 + 0.5) / Math.hypot(nx, ny, 1.1))
+    const fall = 1 - 0.42 * smooth(1000, 2300, sy) // the legs sink into the dark
+
+    let w: number
+    let b: number
+    const sd = visor[i]
+    if (sd >= RIM) {
+      // Dark glass: no face. A soft reflection runs along the upper-left of the rim.
+      const side = Math.min(1, Math.max(0, (VISOR_C.x - sx + (VISOR_C.y - sy) * 1.2) / 260))
+      const streak = Math.exp(-(((sd - 40) / 13) ** 2)) * smooth(0.3, 0.75, side)
+      w = 0.55 + 0.4 * side + 2.1 * streak
+      b = 0.17 + 0.2 * side + 0.75 * streak
+    } else {
+      const rim = Math.abs(sd) < RIM
+      const e = rim ? 1 : edgeMap[i]
+      const l = smooth(0.4, 0.92, lumMap[i]) // the drawing's own light and shadow
+      const fill = (0.16 + 0.62 * l) * (0.38 + 0.9 * light) * fall
+      const line = (0.62 + 0.38 * Math.min(1, light * 1.35)) * (0.6 + 0.4 * fall)
+      w = detailWeight(sx, sy) * FILL + EDGE * e + (rim ? 1 : 0)
+      b = fill + ((rim ? 1 : line) - fill) * e
+    }
     if (Math.random() * MAX_WEIGHT > w) continue
-    const d = Math.sqrt(dRaw / maxD)
-    pos[n * 2] = x * 2
-    pos[n * 2 + 1] = y * 2
-    depth[n] = d
-    lum[n] = Math.min(1, 0.25 + l * 0.9)
-    const big = Math.random() < 0.12
-    size[n] = big ? 1.5 + Math.random() * 1.1 : 0.6 + Math.random() * 0.5
+    pos[n * 2] = sx
+    pos[n * 2 + 1] = sy
+    depth[n] = Math.sqrt(dRaw / maxD)
+    lum[n] = Math.min(1, b * (0.8 + Math.random() * 0.4))
+    const big = Math.random() < 0.06
+    size[n] = big ? 1.3 + Math.random() * 0.9 : 0.6 + Math.random() * 0.45
     rnd[n] = Math.random()
     n++
   }
@@ -215,9 +299,11 @@ const vertex = /* glsl */ `
     q.x -= ee * uView.x * (0.8 + aRnd * 0.7);
     q.y += (aRnd - 0.5) * ee * 280.0;
 
-    // Light: front-lit by depth, twinkle on the bigger dots.
-    float front = 0.3 + 0.7 * pow(aDepth, 0.8);
-    float tw = aSize > 1.4 ? 0.65 + 0.35 * sin(uTime * (1.5 + aRnd * 2.5) + aRnd * 60.0) : 1.0;
+    // Light is baked per dot (aLum). On top: a slow shadow drifting across the figure, like cloud
+    // cover, and a twinkle on the bigger dots.
+    float front = 0.8 + 0.2 * aDepth;
+    front *= 0.84 + 0.16 * sin(aPos.y * 0.0042 + aPos.x * 0.0021 - uTime * 0.4);
+    float tw = aSize > 1.25 ? 0.6 + 0.4 * sin(uTime * (1.5 + aRnd * 2.5) + aRnd * 60.0) : 1.0;
 
     gl_Position = vec4(q.x / uView.x * 2.0 - 1.0, 1.0 - q.y / uView.y * 2.0, 0.0, 1.0);
     // Sand in flight is finer and dimmer; x2.6 leaves room for the halo.
@@ -234,7 +320,7 @@ const fragment = /* glsl */ `
     float d = length(gl_PointCoord - 0.5) * 2.0; // 0 centre → 1 edge
     if (d > 1.0) discard;
     float core = exp(-d * d * 22.0);
-    float halo = exp(-d * d * 5.0) * 0.28;
+    float halo = exp(-d * d * 5.0) * 0.2;
     float i = (core + halo) * vA;
     gl_FragColor = vec4(uColor * i, min(1.0, i)); // premultiplied: only the light is added
   }

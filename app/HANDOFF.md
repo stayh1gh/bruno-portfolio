@@ -31,9 +31,11 @@ npm run dev -- --port 4185
    - Text: one paragraph, pure white `#FFFFFF`, sans only; bold on "Bruno Paradas", "design, build, and ship", "Buzzfeed". Typed at an even pace (23 letters/s, no pauses, no caret), starting shortly after the dots begin to arrive. Left on desktop (max 54% width), centred on phones. Pinned for 150svh; scrolling fast-forwards the typing. Scroll hint: a floating mouse icon only.
    - **Dot astronaut** — `src/components/dot-astronaut.tsx` (three.js Points + shader, one draw call, screen-pixel space):
      - Intro: the dots blow in from off-screen left like a ray of sand carried by the wind (~3.5s), finer/dimmer in flight, then settle into the figure. No loading ring any more.
-     - Dots are scattered at random inside `public/images/story/astronaut-body.webp` (1304×2311, transparent); the drawing's dark line work stays mostly empty. Density varies (`SPOTS` / `detailWeight`): densest on the helmet, richer on the hands, chest panel and outline, sparser on legs/backpack. `SPACING` (6.2px) sets the overall amount. Most dots tiny, ~12% bigger ones that twinkle.
-     - Glow: premultiplied additive blending (soft core + halo), so dense areas shine. Colour `#eef2dc`.
-     - Fake depth (distance from the silhouette edge): front-lit brightness, gentle turn toward the cursor + idle sway, soft perspective.
+     - Dots are scattered at random inside `public/images/story/astronaut-body.webp` (1304×2311, transparent). Most sit on the drawing's contours (edge detection on its line work, shadow edges and silhouette), which read as bright dotted lines like the reference; a dim fill lies between them (`FILL` / `EDGE`), densest on the helmet (`SPOTS` / `detailWeight`). `SPACING` (4.1px) sets the overall amount. Most dots tiny, ~6% bigger ones that twinkle.
+     - Visor: the face in the drawing is masked out (`VISOR` outline, source px) → dark glass with a bright rim, a few dim dots and one soft reflection. Bruno asked for no face in the helmet.
+     - Gloomy low-key light, baked per dot: lit from the upper left, right/under sides in shadow, legs fading into the dark; a slow shadow drifts across the figure (shader).
+     - Glow: premultiplied additive blending (soft core + small halo). Colour `#e6ebd8`.
+     - Fake depth (distance from the silhouette edge): gentle turn toward the cursor + idle sway, soft perspective.
      - No cursor light/push any more (removed at Bruno's request).
      - On scroll out of the intro: the figure rises, turns and its dots fly off to the left.
    - Earlier experiments Bruno rejected: a sparse "silhouette only" version, an empty visor, and a version with a filled plain visor. He preferred the stipple that follows the illustration, now with variable density.
