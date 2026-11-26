@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { motion, useMotionValueEvent, useScroll } from 'motion/react'
+import { motion } from 'motion/react'
 import { CONTACT_EMAIL } from '@/data'
 import { cn } from '@/lib/utils'
 import { Button, Glare } from './ui/button'
@@ -9,10 +8,6 @@ import { Magnetic } from './fx/magnetic'
 export type Panel = 'about' | 'other' | null
 
 export function Nav({ panel, setPanel }: { panel: Panel; setPanel: (p: Panel) => void }) {
-  const { scrollY } = useScroll()
-  const [scrolled, setScrolled] = useState(false)
-  useMotionValueEvent(scrollY, 'change', (v) => setScrolled(v > 40))
-
   const link = (label: string, on: boolean, onClick: () => void, className?: string) => (
     <button
       onClick={onClick}
@@ -41,13 +36,6 @@ export function Nav({ panel, setPanel }: { panel: Panel; setPanel: (p: Panel) =>
       transition={{ delay: 0.4, duration: 0.8, ease: [0.2, 0.7, 0.2, 1] }}
       className="fixed inset-x-0 top-0 z-50"
     >
-      <div
-        aria-hidden
-        className={cn(
-          'pointer-events-none absolute inset-0 -bottom-6 bg-gradient-to-b from-bg via-bg/80 to-transparent transition-opacity duration-500',
-          scrolled && !panel ? 'opacity-100' : 'opacity-0',
-        )}
-      />
       <div className="relative mx-auto flex h-[72px] w-full max-w-[2200px] items-center justify-between px-5 md:h-[84px] md:px-8 xl:px-24">
         <a
           href="#top"

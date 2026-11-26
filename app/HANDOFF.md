@@ -34,12 +34,12 @@ npm run dev -- --port 4185
      - Dots are scattered at random inside `public/images/story/astronaut-body.webp` (1304×2311, transparent). Most sit on the drawing's contours (edge detection on its line work, shadow edges and silhouette), which read as bright dotted lines like the reference; a dim fill lies between them (`FILL` / `EDGE`), densest on the helmet (`SPOTS` / `detailWeight`). `SPACING` (4.9px) sets the overall amount. Most dots tiny, ~6% bigger ones that twinkle.
      - Visor: the face in the drawing is masked out (`VISOR` outline, source px) → dark glass with a bright rim, a few dim dots and one soft reflection. Bruno asked for no face in the helmet.
      - Gloomy low-key light, baked per dot: lit from the upper left, right/under sides in shadow, legs fading into the dark; a slow shadow drifts across the figure (shader).
-     - Glow: premultiplied additive blending (soft core + small halo). Colour `#e6ebd8`.
+     - Glow: premultiplied additive blending (soft core + small halo). Colour `#dbe6f7` (cold blue-white).
      - Fake depth (distance from the silhouette edge): gentle turn toward the cursor + idle sway, soft perspective.
-     - No cursor light/push any more (removed at Bruno's request).
+     - Hover: the dots drift away from the cursor and drift back (added back at Bruno's request). No cursor light/glow.
      - On scroll out of the intro: the figure rises, turns and its dots fly off to the left.
    - Earlier experiments Bruno rejected: a sparse "silhouette only" version, an empty visor, and a version with a filled plain visor. He preferred the stipple that follows the illustration, now with variable density.
-2. **Background** — `src/components/space-backdrop.tsx`: plain very dark olive-black `#12140f` (taken from the reference video) behind the whole page, with a fixed SVG film grain (`@keyframes grain` in `index.css`, 7% opacity). The space painting, stars and comets were removed (and `galaxy.tsx` deleted).
+2. **Background** — `src/components/space-backdrop.tsx`: plain cold blue-black `#06080c` (Bruno asked for blacker and cold colours) behind the whole page, with a fixed SVG film grain (`@keyframes grain` in `index.css`, 7% opacity). The space painting, stars and comets were removed (and `galaxy.tsx` deleted).
 3. **Work** — `src/components/work.tsx`: cards match Figma `9:297`; they slide in from the left in sequence; image zooms slowly with scroll. Heading "What I've **built**" white sans.
 4. **Footer** — astronaut avatar with Bruno's moustache and goatee (`public/images/avatar.webp`), floating; "Want to build something? **Let's talk**". Credit line "Space illustrations: Magnific".
 5. **Overlays** — About and Other work, white sans. About's timeline: a straight line with a glowing point that travels down as you scroll.

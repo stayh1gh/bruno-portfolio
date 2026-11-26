@@ -18,6 +18,7 @@ import type { MotionValue } from 'motion/react'
  * - They glow: soft halos added together (additive light), so dense areas shine.
  * - Fake depth: dots further inside the silhouette sit closer; the figure turns gently toward the
  *   cursor, so the dots slide past each other like a 3D scan.
+ * - Hovering: the dots drift away from the cursor and drift back.
  * - Scrolling out of the intro, the figure rises, turns and its dots fly off to the left.
  *
  * One WebGL draw call (three.js Points + a small shader), in screen pixels.
@@ -26,7 +27,7 @@ import type { MotionValue } from 'motion/react'
 const SRC = '/images/story/astronaut-body.webp'
 const IMG_W = 1304
 const IMG_H = 2311
-const DOT_COLOR = new THREE.Color('#e6ebd8') // pale cream with a faint green, like the reference
+const DOT_COLOR = new THREE.Color('#dbe6f7') // cold, pale blue-white
 const SPACING = 4.9 // average gap between dots, css px (it varies: denser on contours and the helmet)
 
 type Props = {
@@ -249,6 +250,8 @@ const vertex = /* glsl */ `
   uniform float uExit;
   uniform float uShift;
   uniform float uRot;
+  uniform vec2 uMouse;
+  uniform float uMouseOn;
   uniform vec2 uStream; // y of the wind ray the dots arrive along
   uniform float uDot;
   attribute vec2 aPos;
@@ -294,6 +297,12 @@ const vertex = /* glsl */ `
     float taper = pow(sin(3.14159 * h1), 0.6);
     float across = (h2 + h3 + h4 - 1.5) * (2.0 + 9.0 * taper); // tightly packed, densest along the middle
     q.y = mix(uStream.y + sweep + across, target.y, open);
+
+    // Hover: dots drift away from the cursor (its position is smoothed, so they drift back).
+    vec2 md = q - uMouse;
+    float mdist = length(md);
+    float push = uMouseOn * open * (1.0 - smoothstep(0.0, 160.0, mdist));
+    q += (mdist > 0.001 ? md / mdist : vec2(0.0)) * push * 44.0 * (0.6 + 0.8 * aRnd);
 
     // Exit: the dots fly off to the left, the far ones first.
     float e = clamp(uExit * 1.35 - aRnd * 0.35, 0.0, 1.0);
@@ -355,6 +364,8 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       uExit: { value: 0 },
       uShift: { value: 0 },
       uRot: { value: 0 },
+      uMouse: { value: new THREE.Vector2(-9999, -9999) },
+      uMouseOn: { value: 0 },
       uStream: { value: new THREE.Vector2() },
       uDot: { value: 2.2 },
       uColor: { value: DOT_COLOR },
@@ -413,13 +424,23 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       uniforms.uDot.value = vw >= 1024 ? 2.8 : 2.3
     }
 
-    // The figure turns gently toward the cursor (no light, no push).
+    // The figure turns gently toward the cursor, and its dots drift away from it. The pointer is
+    // smoothed, so pushed dots drift back when the cursor moves on.
     let nx = 0
+    const pointer = { x: -9999, y: -9999, on: 0 }
     const onMove = (e: PointerEvent) => {
       if (e.pointerType !== 'mouse') return
       nx = e.clientX / window.innerWidth - 0.5
+      const r = canvas.getBoundingClientRect()
+      pointer.x = e.clientX - r.left
+      pointer.y = e.clientY - r.top
+      pointer.on = 1
     }
-    if (!reduce) window.addEventListener('pointermove', onMove, { passive: true })
+    const onLeave = () => (pointer.on = 0)
+    if (!reduce) {
+      window.addEventListener('pointermove', onMove, { passive: true })
+      document.addEventListener('pointerleave', onLeave)
+    }
 
     let gatherStart = 0
     const image = new Image()
@@ -454,6 +475,13 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       const s = scroll.get()
       uniforms.uShift.value = -s * lay.rise
       uniforms.uExit.value = reduce ? 0 : Math.min(1, Math.max(0, (s - 0.3) / 0.6))
+      const m = uniforms.uMouse.value
+      const k = 1 - Math.pow(0.0015, dt)
+      if (pointer.on) {
+        m.x = m.x < -9000 ? pointer.x : m.x + (pointer.x - m.x) * k
+        m.y = m.y < -9000 ? pointer.y : m.y + (pointer.y - m.y) * k
+      }
+      uniforms.uMouseOn.value += (pointer.on - uniforms.uMouseOn.value) * k
       rot += ((reduce ? 0 : nx * 0.3 + Math.sin(time * 0.25) * 0.1) - rot) * (1 - Math.pow(0.05, dt))
       uniforms.uRot.value = rot
       uniforms.uTime.value = reduce ? 0 : time
@@ -492,6 +520,7 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       ro.disconnect()
       window.clearTimeout(resizeT)
       window.removeEventListener('pointermove', onMove)
+      document.removeEventListener('pointerleave', onLeave)
       document.removeEventListener('visibilitychange', onVis)
       points?.geometry.dispose()
       material.dispose()
