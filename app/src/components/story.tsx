@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from '
 import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { STORY, type StoryStyle } from '@/data'
 import { cn } from '@/lib/utils'
+import { DotAstronaut } from './dot-astronaut'
 
 // ── Flatten the story into typed units ───────────────────────────────────────────────
 type Char = { ch: string; s?: StoryStyle; i: number }
@@ -54,8 +55,8 @@ const STYLE: Record<StoryStyle, string> = {
 // The ring loads alone, then the story is typed at an even pace. Pauses come from the
 // copy itself ({ pause } in data.ts). The text is laid out at its final size and place
 // from the start, so typing never moves it.
-// Intro: the space and the astronaut fade in first; typing starts as they settle.
-const INTRO_MS = 1300
+// Intro: typing starts a moment after the dot astronaut starts gathering.
+const INTRO_MS = 600
 const CPS = 23 // letters per second
 const SMALL_PAUSE = {} as Record<string, number> // no pauses: an even pace throughout
 
@@ -103,6 +104,7 @@ export function Story() {
   const containerRef = useRef<HTMLDivElement>(null)
 
   const [n, setN] = useState(0)
+  const [ready, setReady] = useState(false) // the dots have started gathering
   const nRef = useRef(0)
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ['start start', 'end end'] })
 
@@ -113,6 +115,7 @@ export function Story() {
       setN(total)
       return
     }
+    if (!ready) return
     let raf = 0
     let last = performance.now()
     let holdUntil = last + INTRO_MS
@@ -141,7 +144,7 @@ export function Story() {
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reduce, scrollYProgress, total, text, pauseAt])
+  }, [reduce, ready, scrollYProgress, total, text, pauseAt])
 
   // Leaving: the story dims and recedes as the work section comes up.
   const exitOpacity = useTransform(scrollYProgress, [0.6, 1], [1, 0.35])
@@ -153,45 +156,10 @@ export function Story() {
     <section ref={containerRef} aria-label="Intro" className="relative h-[150svh] overflow-x-clip">
       <p className="sr-only">{STORY.map((s) => ('br' in s ? ' ' : 't' in s ? s.t : '')).join('')}</p>
 
-      {/* The astronaut, full body, floating on the right. He isn't pinned like the text:
-          he scrolls with the page, so his legs come into view as you scroll down. */}
-      <div aria-hidden className="pointer-events-none absolute right-[-12vw] top-[60svh] h-[66svh] lg:right-[7vw] lg:top-[14svh] lg:h-[125svh]">
-        <motion.div
-          className="h-full"
-          initial={{ opacity: 0, y: 40, scale: 0.97, filter: 'blur(14px)' }}
-          animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-          transition={{ duration: 2, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <motion.div
-            className="relative h-full max-lg:opacity-85"
-            animate={reduce ? undefined : { y: [0, -14, 0], x: [0, 6, 0], rotate: [-1.5, 1.2, -1.5] }}
-            transition={{
-              y: { duration: 7, repeat: Infinity, ease: 'easeInOut' },
-              x: { duration: 9, repeat: Infinity, ease: 'easeInOut' },
-              rotate: { duration: 13, repeat: Infinity, ease: 'easeInOut' },
-            }}
-          >
-            {/* Visor glow, breathing behind the helmet. */}
-            <motion.div
-              className="absolute left-[22%] top-[-1%] aspect-square w-[46%] rounded-full bg-[radial-gradient(circle,rgb(91_134_255/0.45),transparent_65%)] blur-2xl"
-              animate={reduce ? undefined : { opacity: [0.5, 0.9, 0.5], scale: [0.95, 1.05, 0.95] }}
-              transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-            />
-            <img
-              src="/images/story/astronaut-body.webp"
-              srcSet="/images/story/astronaut-body-700.webp 700w, /images/story/astronaut-body.webp 1304w"
-              sizes="(min-width: 1024px) 71svh, 37svh"
-              alt=""
-              width={1304}
-              height={2311}
-              className="relative block h-full w-auto max-w-none select-none"
-              draggable={false}
-            />
-          </motion.div>
-        </motion.div>
-      </div>
-
       <div className="sticky top-0 flex h-svh items-center overflow-hidden">
+        {/* Option D: the astronaut as a cloud of dots (loads with a 0→100 counter, gathers, flies left on scroll). */}
+        <DotAstronaut scroll={scrollYProgress} onReady={() => setReady(true)} reduce={!!reduce} />
+
         {/* Soft dark wash on the text side so the type stays readable. */}
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(65%_75%_at_20%_50%,rgb(4_4_18/0.4),transparent_72%)] max-lg:bg-[radial-gradient(90%_60%_at_50%_42%,rgb(0_0_0/0.55),transparent_75%)]" />
 

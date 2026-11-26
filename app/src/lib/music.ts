@@ -20,7 +20,7 @@ function fadeTo(target: number, ms: number, then?: () => void) {
   const step = (now: number) => {
     if (!audio) return
     const k = Math.min(1, (now - t0) / ms)
-    audio.volume = from + (target - from) * k
+    audio.volume = Math.min(1, Math.max(0, from + (target - from) * k))
     if (k < 1) fade = requestAnimationFrame(step)
     else then?.()
   }
