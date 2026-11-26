@@ -7,7 +7,7 @@ import { AnimatePresence, motion, type MotionValue } from 'motion/react'
  * motionsites.ai's "Dot Portrait").
  *
  * - The dots are sampled from the illustrated astronaut's silhouette (`astronaut-body.webp`):
- *   sparse and simple, denser along the edges, no shading; the visor is left empty (empty helmet).
+ *   sparse and simple, denser along the edges, no shading; the visor is plain glass (no face).
  * - Depth is invented ("fake 3D"): the further a dot is from the silhouette edge, the closer it
  *   sits to the viewer. The figure turns gently, so the dots slide past each other like a 3D scan.
  * - While it loads, a 0→100 counter runs in a ring; then the dots gather into the figure.
@@ -42,8 +42,8 @@ function layout(vw: number, vh: number) {
   return { left: vw * 1.12 - w, top: vh * 0.6, w, h, rise: vh * 0.45 }
 }
 
-// The helmet's visor glass in the source image (px): an ellipse, rotated. It's left empty
-// ("empty helmet"), and its rim gets bright dots, like the glasses in the reference.
+// The helmet's visor glass in the source image (px): an ellipse, rotated. Inside it the dots are
+// plain (no face, just glass); its rim gets bright dots, like the glasses in the reference.
 const VISOR = { cx: 552, cy: 330, rx: 232, ry: 178, rot: -0.36 }
 function visorF(x: number, y: number) {
   const dx = x - VISOR.cx
@@ -72,12 +72,12 @@ function sampleDots(img: HTMLImageElement, scale: number, spacing: number) {
   ctx.drawImage(img, 0, 0, gw, gh)
   const px = ctx.getImageData(0, 0, gw, gh).data
 
-  // Inside = part of the figure and not the visor glass.
+  // Inside = part of the figure (the visor glass included: it's filled with plain dots).
   const inside = new Uint8Array(gw * gh)
   for (let y = 0; y < gh; y++)
     for (let x = 0; x < gw; x++) {
       const i = y * gw + x
-      inside[i] = px[i * 4 + 3] > 128 && visorF((x + 0.5) * step, (y + 0.5) * step) >= 1 ? 1 : 0
+      inside[i] = px[i * 4 + 3] > 128 ? 1 : 0
     }
 
   // Distance (in cells) from each inside cell to the nearest outside cell: two-pass chamfer.
@@ -112,16 +112,19 @@ function sampleDots(img: HTMLImageElement, scale: number, spacing: number) {
       const sx = (x + Math.random()) * step
       const sy = (y + Math.random()) * step
       const edgeCss = dist[i] * cellCss
-      const rim = visorF(sx, sy) < 1.22 // just outside the glass
+      const f = visorF(sx, sy)
+      const rim = f > 0.86 && f < 1.16 // the visor's edge
+      const glass = f <= 0.86 // inside the visor: plain dots, no face
       const l = (0.2126 * px[i * 4] + 0.7152 * px[i * 4 + 1] + 0.0722 * px[i * 4 + 2]) / 255
-      const line = l < 0.16 // the drawing's main line work, kept faintly so the shape reads
+      const line = !glass && l < 0.16 // the drawing's main line work, kept faintly so the shape reads
       let w = 0.5 + 2.4 * Math.exp(-edgeCss / 5)
       if (rim) w = 2.6
+      else if (glass) w = 0.7
       else if (line) w += 0.35
       if (Math.random() > base * w) continue
       pos.push(sx, sy)
       depth.push(Math.sqrt(dist[i] / maxD))
-      lum.push(rim ? 1 : edgeCss < 6 ? 0.8 + Math.random() * 0.2 : 0.35 + Math.random() * 0.55)
+      lum.push(rim ? 1 : glass ? 0.3 + Math.random() * 0.45 : edgeCss < 6 ? 0.8 + Math.random() * 0.2 : 0.35 + Math.random() * 0.55)
       rnd.push(Math.random())
     }
   return { pos: new Float32Array(pos), depth: new Float32Array(depth), lum: new Float32Array(lum), rnd: new Float32Array(rnd) }
