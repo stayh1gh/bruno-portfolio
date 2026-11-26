@@ -220,8 +220,8 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       renderer.setSize(vw, vh, false)
       lay = layout(vw, vh)
       const scale = lay.h / IMG_H
-      // About one dot every 4.6 css px on screen.
-      const step = Math.max(5, 4.6 / scale)
+      // About one dot every 6 css px on screen.
+      const step = Math.max(6, 6 / scale)
       const s = sampleDots(img, step)
       const geo = new THREE.BufferGeometry()
       geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(s.rnd.length * 3), 3))
