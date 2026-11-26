@@ -10,8 +10,8 @@ import { DOT_BLENDING, DOT_COLOR, DOT_FRAGMENT } from './dots'
  * stays a background.
  *
  * - Scrolling moves it slowly (parallax). The stars wrap around, so they never run out. The first
- *   galaxy (upper left) and planet (upper right) belong to the intro; the second galaxy comes by
- *   about halfway down the page and the second planet near the footer.
+ *   galaxy (upper left) and planet (upper right) belong to the intro; the second galaxy comes up
+ *   with the projects and the second planet near the footer.
  * - The galaxies turn slowly; the planets spin and are lit from the upper left like the
  *   astronaut, so they show a bright limb and a dark side; the stars twinkle.
  * - It fades in dot by dot and shifts a little against the cursor.
@@ -112,8 +112,8 @@ function place(vw: number, vh: number, maxScroll: number) {
   return {
     galaxy: wide ? { x: vw * 0.26, y: vh * 0.22, r: Math.min(vw * 0.17, vh * 0.27) } : { x: vw * 0.32, y: vh * 0.17, r: Math.min(vw * 0.33, vh * 0.2) },
     planet: wide ? { x: vw * 0.9, y: vh * 0.165, r: vh * 0.034 } : { x: vw * 0.84, y: vh * 0.24, r: vh * 0.016 },
-    // Halfway down the page, on the right.
-    galaxy2: far ? { x: vw * (wide ? 0.84 : 0.72), y: later(0.5, 0.45), r: wide ? Math.min(vw * 0.12, vh * 0.2) : Math.min(vw * 0.28, vh * 0.16) } : null,
+    // Late in the page, on the right: it comes up with the projects and ends above the footer.
+    galaxy2: far ? { x: vw * (wide ? 0.84 : 0.72), y: later(0.85, 0.4), r: wide ? Math.min(vw * 0.12, vh * 0.2) : Math.min(vw * 0.28, vh * 0.16) } : null,
     // At the end of the page, to the left of the footer.
     planet2: far ? { x: vw * (wide ? 0.16 : 0.14), y: later(1, 0.34), r: vh * (wide ? 0.042 : 0.02) } : null,
   }

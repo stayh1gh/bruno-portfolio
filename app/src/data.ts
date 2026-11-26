@@ -18,6 +18,24 @@ export const STORY: StorySeg[] = [
   { t: '.' },
 ]
 
+/**
+ * The statement between the intro and the projects. PLACEHOLDER copy: replace with Bruno's words.
+ * `quiet` phrases are shown in grey.
+ */
+export const STATEMENT: { t: string; quiet?: boolean }[][] = [
+  [
+    { t: 'I work where design meets code: ' },
+    { t: 'sketching the idea, building the system,', quiet: true },
+    { t: ' and shipping the real thing, ' },
+    { t: 'not just the mockup.', quiet: true },
+  ],
+  [
+    { t: 'Tools change fast, so I care about what doesn’t: ' },
+    { t: 'clear thinking, honest details,', quiet: true },
+    { t: ' and interfaces that feel obvious the first time.' },
+  ],
+]
+
 /** The long version of the story, saved for the About overlay. */
 export const STORY_LONG: StorySeg[] = [
   { t: 'Hi, I’m ' },

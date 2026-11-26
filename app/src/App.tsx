@@ -9,6 +9,7 @@ import { About } from './components/about'
 import { OtherWork } from './components/other-work'
 import { SoundToggle } from './components/sound-toggle'
 import { Cursor } from './components/cursor'
+import { Statement } from './components/statement'
 import { SpaceBackdrop } from './components/space-backdrop'
 import { startSmoothScroll } from './lib/smooth-scroll'
 
@@ -25,6 +26,7 @@ export default function App() {
         <SpaceBackdrop />
         <main id="top">
           <Story />
+          <Statement />
           <Work />
         </main>
         <Footer />
