@@ -6,7 +6,7 @@ import type { MotionValue } from 'motion/react'
  * Option D: the intro astronaut as a glowing cloud of dots, after motionsites.ai's "Dot Portrait".
  *
  * - Intro: the dots sweep in from off-screen left as one ribbon of sand in a single long S-curve
- *   (three layered bands, thin at the ends), then the ribbon opens up into the astronaut.
+ *   (one dense, bright ray, thin at the ends), then the ray opens up into the astronaut.
  * - Dots are scattered at random inside the illustrated astronaut (`astronaut-body.webp`). Most of
  *   them sit on the drawing's contours (line work, shadow edges, the silhouette), which read as
  *   bright dotted lines, as in the reference; a dim fill lies between them, denser on the helmet.
@@ -276,9 +276,9 @@ const vertex = /* glsl */ `
     vec2 q = vec2(c.x + x2 * persp, c.y + (p.y - c.y) * persp);
     q += vec2(sin(uTime * 1.3 + aRnd * 40.0), cos(uTime * 1.1 + aRnd * 31.0)) * 0.6;
 
-    // Intro: one ribbon of sand sweeps in from off-screen left in a single long S-curve (it dips,
-    // then rises toward the helmet), thin at its head and tail and wider in the middle, made of
-    // three layered bands that part and rejoin. Then the ribbon opens up into the figure.
+    // Intro: one dense, bright ray of sand sweeps in from off-screen left in a single long S-curve
+    // (it dips, then rises toward the helmet), thin at its head and tail and a little wider in the
+    // middle. Then the ray opens up into the figure.
     vec2 target = q;
     float h1 = hash(aRnd * 7.1);            // place along the ribbon: 0 head → 1 tail
     float h2 = hash(aRnd * 3.7 + 1.0);
@@ -288,12 +288,11 @@ const vertex = /* glsl */ `
     float gx = 1.0 - pow(1.0 - g, 1.8);
     float open = smoothstep(0.5, 1.0, g);  // 0 in the ribbon → 1 landed
     float flight = 1.0 - open;
-    q.x = mix(-40.0 - h1 * uView.x * 0.55, target.x, gx);
-    float band = floor(h3 * 3.0);          // 0, 1, 2
+    q.x = mix(-40.0 - h1 * uView.x * 0.48, target.x, gx);
     // One wave about as long as the screen is wide, the same for every dot, drifting slowly.
-    float sweep = sin(q.x / uView.x * 6.0 - 0.22 - uTime * 0.3 + band * 0.2) * uView.y * (0.13 + band * 0.02);
+    float sweep = sin(q.x / uView.x * 6.0 - 0.22 - uTime * 0.3) * uView.y * 0.14;
     float taper = pow(sin(3.14159 * h1), 0.6);
-    float across = (h2 + h4 - 1.0) * (3.0 + 13.0 * taper) + (band - 1.0) * 10.0 * taper;
+    float across = (h2 + h3 + h4 - 1.5) * (2.0 + 9.0 * taper); // tightly packed, densest along the middle
     q.y = mix(uStream.y + sweep + across, target.y, open);
 
     // Exit: the dots fly off to the left, the far ones first.
@@ -310,9 +309,10 @@ const vertex = /* glsl */ `
 
     gl_Position = vec4(q.x / uView.x * 2.0 - 1.0, 1.0 - q.y / uView.y * 2.0, 0.0, 1.0);
     // Sand in flight is finer and dimmer; x2.6 leaves room for the halo.
-    gl_PointSize = uDot * aSize * uDpr * persp * mix(1.0, 0.7, flight) * 2.6;
+    gl_PointSize = uDot * aSize * uDpr * persp * mix(1.0, 0.9, flight) * 2.6;
     float visible = (g > 0.0 ? 1.0 : 0.0) * (1.0 - smoothstep(0.6, 1.0, e));
-    vA = aLum * front * tw * visible * mix(1.0, 0.8, flight);
+    // In the ribbon every dot is bright (the dim fill dots too), so the ray reads as a solid streak.
+    vA = mix(aLum, max(aLum, 0.75), flight) * front * tw * visible;
   }
 `
 
