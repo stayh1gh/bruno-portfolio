@@ -6,6 +6,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["serve.py", "4173"],
       "port": 4173
+    },
+    {
+      "name": "portfolio-motion-redesign",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "app", "run", "dev", "--", "--port", "4185", "--strictPort"],
+      "port": 4185
     }
   ]
 }

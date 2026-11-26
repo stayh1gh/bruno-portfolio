@@ -1,5 +1,5 @@
-import { useRef, useState, type RefObject } from 'react'
-import { motion, useMotionValueEvent, useScroll, useSpring } from 'motion/react'
+import { useLayoutEffect, useRef, useState, type RefObject } from 'react'
+import { motion, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react'
 import { CAREER, type Job } from '@/data'
 import { cn } from '@/lib/utils'
 
@@ -23,41 +23,102 @@ export function About({ scrollRef }: { scrollRef: RefObject<HTMLDivElement | nul
         Product Designer with more than 8 years of experience designing digital products end to end. I excel at building and
         maintaining <span className="font-semibold">Design Systems</span> and creating meaningful experiences.
       </motion.p>
-      <motion.h3
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="mt-16 font-mono text-[12px] uppercase tracking-[0.22em] text-subtle md:mt-20"
-      >
-        Work experience
-      </motion.h3>
-      <Timeline scrollRef={scrollRef} />
+      {/* bottom room so the last job can scroll up to the reading line and light up */}
+      <div className="mt-10 pb-[30vh] md:mt-14">
+        <Timeline scrollRef={scrollRef} />
+      </div>
     </div>
   )
 }
 
+/**
+ * A straight line through each job's dot. As the panel scrolls, a small glowing point travels down it
+ * (following a reading line 72% down the panel), the line fills behind it, and each dot lights up as it passes.
+ */
 function Timeline({ scrollRef }: { scrollRef: RefObject<HTMLDivElement | null> }) {
+  const reduce = useReducedMotion()
   const listRef = useRef<HTMLOListElement>(null)
-  const { scrollYProgress } = useScroll({ container: scrollRef, target: listRef, offset: ['start 75%', 'end 75%'] })
-  const fill = useSpring(scrollYProgress, { stiffness: 140, damping: 28 })
+  const dotRefs = useRef<(HTMLSpanElement | null)[]>([])
+  const [ys, setYs] = useState<number[]>([]) // dot centres, relative to the list
+  const [h, setH] = useState(0)
   const [active, setActive] = useState(0)
-  useMotionValueEvent(scrollYProgress, 'change', (v) => {
-    setActive(Math.min(CAREER.length - 1, Math.floor(v * CAREER.length + 0.15)))
+
+  const { scrollYProgress } = useScroll({ container: scrollRef, target: listRef, offset: ['start 72%', 'end 72%'] })
+  const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 28, restDelta: 0.0005 })
+
+  // Offsets, not bounding rects: the items slide in with a transform, which must not shift the dots.
+  useLayoutEffect(() => {
+    const list = listRef.current
+    if (!list) return
+    const measure = () => {
+      setH(list.offsetHeight)
+      setYs(dotRefs.current.map((el) => (el!.offsetParent as HTMLElement).offsetTop + el!.offsetTop + el!.offsetHeight / 2))
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(list)
+    return () => ro.disconnect()
+  }, [])
+
+  const first = ys[0] ?? 0
+  const last = ys[ys.length - 1] ?? 0
+  // Where the glowing point sits on the line, clamped between the first and last dot.
+  const tip = useTransform(progress, (v) => Math.min(Math.max(v * h, first), last))
+  const fillHeight = useTransform(tip, (y) => y - first)
+
+  useMotionValueEvent(tip, 'change', (y) => {
+    let idx = 0
+    ys.forEach((dy, i) => {
+      if (y >= dy - 1) idx = i
+    })
+    setActive(idx)
   })
 
+  const on = (i: number) => reduce || i <= active
+
   return (
-    <ol ref={listRef} className="relative mt-8 pl-9 md:pl-11">
-      <div className="absolute bottom-3 left-[5px] top-3 w-[2px] overflow-hidden rounded-full bg-line">
-        <motion.div className="h-full w-full origin-top rounded-full bg-accent shadow-[0_0_12px_var(--accent)]" style={{ scaleY: fill }} />
-      </div>
+    <ol ref={listRef} className="relative pl-9 md:pl-11">
+      {ys.length > 1 && (
+        <div aria-hidden className="pointer-events-none absolute left-[5px] w-[2px]" style={{ top: first, height: last - first }}>
+          <div className="absolute inset-0 rounded-full bg-line" />
+          <motion.div
+            className="absolute inset-x-0 top-0 rounded-full bg-accent/70"
+            style={{ height: reduce ? last - first : fillHeight }}
+          />
+          {!reduce && (
+            <motion.span
+              className="absolute left-1/2 top-0 size-[7px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_0_8px_2px_var(--accent)]"
+              style={{ y: fillHeight }}
+            />
+          )}
+        </div>
+      )}
       {CAREER.map((job, i) => (
-        <TimelineItem key={job.company} job={job} index={i} on={i <= active} current={i === active} />
+        <TimelineItem
+          key={job.company}
+          job={job}
+          index={i}
+          on={on(i)}
+          dotRef={(el) => {
+            dotRefs.current[i] = el
+          }}
+        />
       ))}
     </ol>
   )
 }
 
-function TimelineItem({ job, index, on, current }: { job: Job; index: number; on: boolean; current: boolean }) {
+function TimelineItem({
+  job,
+  index,
+  on,
+  dotRef,
+}: {
+  job: Job
+  index: number
+  on: boolean
+  dotRef: (el: HTMLSpanElement | null) => void
+}) {
   return (
     <motion.li
       initial={{ opacity: 0, y: 28 }}
@@ -66,11 +127,11 @@ function TimelineItem({ job, index, on, current }: { job: Job; index: number; on
       className="relative py-6 md:py-8"
     >
       <span
+        ref={dotRef}
         aria-hidden
         className={cn(
           'absolute -left-9 top-[34px] size-3 rounded-full border-2 transition-all duration-500 md:-left-11 md:top-[42px]',
-          on ? 'border-accent bg-accent' : 'border-line bg-bg',
-          current && 'shadow-[0_0_0_5px_color-mix(in_oklab,var(--accent)_22%,transparent),0_0_18px_var(--accent)]',
+          on ? 'border-white bg-white shadow-[0_0_12px_var(--accent)]' : 'border-line bg-bg',
         )}
       />
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">

@@ -13,11 +13,11 @@ export function Footer() {
   }
   return (
     <footer id="contact" className="relative flex flex-col items-center px-5 pb-12 pt-24 text-center md:pt-40">
-      {/* Avatar: an anime illustration of Bruno in the astronaut's style, floating gently. */}
+      {/* Avatar: the intro's astronaut with Bruno's moustache and goatee, floating gently. */}
       <motion.div {...rise} transition={{ duration: 0.9 }}>
         <motion.img
           src="/images/avatar.webp"
-          alt="Illustrated portrait of Bruno"
+          alt="Anime illustration of Bruno as the astronaut"
           width={112}
           height={112}
           className="size-24 rounded-full border border-line shadow-[0_0_0_6px_rgb(255_255_255/0.03),0_12px_40px_rgb(0_0_0/0.5)] md:size-28"
