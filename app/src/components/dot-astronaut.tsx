@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import type { MotionValue } from 'motion/react'
-import { createDotSpace } from './dot-space'
+import { DOT_BLENDING, DOT_COLOR, DOT_FRAGMENT } from './dots'
 
 /**
  * Option D: the intro astronaut as a glowing cloud of dots, after motionsites.ai's "Dot Portrait".
@@ -22,15 +22,13 @@ import { createDotSpace } from './dot-space'
  * - Hovering: the dots drift away from the cursor and drift back.
  * - Scrolling out of the intro, the figure rises, turns and its dots fly off to the left.
  *
- * Behind it, in the same dots: stars, a spiral galaxy and a small planet (dot-space.ts).
- *
- * Two WebGL draw calls (three.js Points + small shaders), in screen pixels.
+ * One WebGL draw call (three.js Points + a small shader), in screen pixels. The stars, galaxies
+ * and planets behind it are a separate page-wide layer (dot-space.tsx).
  */
 
 const SRC = '/images/story/astronaut-body.webp'
 const IMG_W = 1304
 const IMG_H = 2311
-const DOT_COLOR = new THREE.Color('#dbe6f7') // cold, pale blue-white
 const SPACING = 4.9 // average gap between dots, css px (it varies: denser on contours and the helmet)
 
 type Props = {
@@ -328,19 +326,6 @@ const vertex = /* glsl */ `
   }
 `
 
-const fragment = /* glsl */ `
-  uniform vec3 uColor;
-  varying float vA;
-  void main() {
-    float d = length(gl_PointCoord - 0.5) * 2.0; // 0 centre → 1 edge
-    if (d > 1.0) discard;
-    float core = exp(-d * d * 22.0);
-    float halo = exp(-d * d * 5.0) * 0.2;
-    float i = (core + halo) * vA;
-    gl_FragColor = vec4(uColor * i, min(1.0, i)); // premultiplied: only the light is added
-  }
-`
-
 export function DotAstronaut({ scroll, onReady, reduce }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const onReadyRef = useRef(onReady)
@@ -376,22 +361,10 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
     const material = new THREE.ShaderMaterial({
       uniforms,
       vertexShader: vertex,
-      fragmentShader: fragment,
-      transparent: true,
-      depthTest: false,
-      depthWrite: false,
-      // Pure additive light (premultiplied): overlapping dots add up, nothing dark is drawn.
-      blending: THREE.CustomBlending,
-      blendSrc: THREE.OneFactor,
-      blendDst: THREE.OneFactor,
-      blendSrcAlpha: THREE.OneFactor,
-      blendDstAlpha: THREE.OneFactor,
+      fragmentShader: DOT_FRAGMENT,
+      ...DOT_BLENDING,
     })
     let points: THREE.Points | null = null
-    // The space behind the figure (stars, a galaxy, a small planet), in the same dots.
-    const space = createDotSpace(fragment, DOT_COLOR)
-    scene.add(space.points)
-    let spaceStart = 0
     let img: HTMLImageElement | null = null
     let lay = layout(1, 1)
 
@@ -420,7 +393,6 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
         points.frustumCulled = false
         scene.add(points)
       }
-      space.resize(vw, vh, dpr)
       uniforms.uView.value.set(vw, vh)
       uniforms.uDpr.value = dpr
       uniforms.uOrigin.value.set(lay.left, lay.top)
@@ -460,7 +432,6 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
         if (disposed) return
         img = image
         build()
-        spaceStart = performance.now()
         if (reduce) {
           onReadyRef.current()
           return
@@ -494,7 +465,6 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       rot += ((reduce ? 0 : nx * 0.3 + Math.sin(time * 0.25) * 0.1) - rot) * (1 - Math.pow(0.05, dt))
       uniforms.uRot.value = rot
       uniforms.uTime.value = reduce ? 0 : time
-      space.update(reduce ? 0 : time, reduce ? 1 : spaceStart ? Math.min(1, (now - spaceStart) / 2800) : 0, s, reduce ? 0 : rot)
 
       if (points) renderer.render(scene, camera)
       raf = requestAnimationFrame(frame)
@@ -533,7 +503,6 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       document.removeEventListener('pointerleave', onLeave)
       document.removeEventListener('visibilitychange', onVis)
       points?.geometry.dispose()
-      space.dispose()
       material.dispose()
       renderer.dispose()
     }
