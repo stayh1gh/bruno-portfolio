@@ -1,19 +1,19 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
-import { AnimatePresence, motion, type MotionValue } from 'motion/react'
+import type { MotionValue } from 'motion/react'
 
 /**
  * Option D: the intro astronaut as a glowing cloud of dots, after motionsites.ai's "Dot Portrait".
  *
- * - Dots are scattered at random inside the illustrated astronaut (`astronaut-body.webp`), denser
- *   where the drawing is light; the dark line work stays mostly empty so the shape reads.
+ * - Intro: the dots blow in from off-screen left, like a ray of sand carried by the wind, then
+ *   settle into the astronaut.
+ * - Dots are scattered at random inside the illustrated astronaut (`astronaut-body.webp`), with a
+ *   varying density: concentrated around the helmet, the hands and chest panel and along the
+ *   outline; sparser on the legs and backpack. Dark line work stays mostly empty.
  *   Most dots are tiny, a few are bigger and sparkle.
- * - They glow: soft halos, added together (additive light), so dense areas shine.
- * - Fake depth: dots further inside the silhouette sit closer and are brighter (front-lit);
- *   the figure turns gently, so the dots slide past each other like a 3D scan.
- * - Loading: a ring of dots with a 0→100 counter and the dot count; at 100 the dots stream
- *   out of the ring and swirl into the figure.
- * - The cursor is a light: a small glowing point that lights up the dots near it ("move the light").
+ * - They glow: soft halos added together (additive light), so dense areas shine.
+ * - Fake depth: dots further inside the silhouette sit closer and are brighter (front-lit); the
+ *   figure turns gently toward the cursor, so the dots slide past each other like a 3D scan.
  * - Scrolling out of the intro, the figure rises, turns and its dots fly off to the left.
  *
  * One WebGL draw call (three.js Points + a small shader), in screen pixels.
@@ -23,12 +23,12 @@ const SRC = '/images/story/astronaut-body.webp'
 const IMG_W = 1304
 const IMG_H = 2311
 const DOT_COLOR = new THREE.Color('#eef2dc') // warm cream with a faint green, like the reference
-const SPACING = 6.5 // average gap between dots, css px (they're random, so it varies)
+const SPACING = 6.2 // average gap between dots, css px (it varies: denser on the helmet)
 
 type Props = {
   /** 0 → 1 while the intro is pinned. */
   scroll: MotionValue<number>
-  /** Called when the dots start streaming into the figure (the story can start typing). */
+  /** Called shortly after the dots start blowing in (the story can start typing). */
   onReady: () => void
   reduce: boolean
 }
@@ -44,10 +44,26 @@ function layout(vw: number, vh: number) {
   const w = (h * IMG_W) / IMG_H
   return { left: vw * 1.12 - w, top: vh * 0.6, w, h, rise: vh * 0.45 }
 }
-/** The loading ring sits on the figure's chest, so the dots stream out from where they'll land. */
-function ringCenter(l: ReturnType<typeof layout>) {
-  return { x: l.left + l.w * 0.5, y: l.top + l.h * 0.27 }
+/**
+ * Where the drawing deserves more dots (source px). Gaussian "spots" add to a base density:
+ * the helmet most of all, then the hands and the chest panel; the legs get fewer.
+ */
+const SPOTS = [
+  { x: 560, y: 370, r: 290, w: 2.4 }, // helmet
+  { x: 600, y: 760, r: 170, w: 0.7 }, // chest panel
+  { x: 90, y: 1110, r: 130, w: 0.8 }, // left glove
+  { x: 1140, y: 1170, r: 130, w: 0.8 }, // right glove
+]
+function detailWeight(x: number, y: number) {
+  let w = y > 1450 ? 0.45 : 0.7 // legs sparser
+  for (const s of SPOTS) {
+    const dx = x - s.x
+    const dy = y - s.y
+    w += s.w * Math.exp(-(dx * dx + dy * dy) / (2 * s.r * s.r))
+  }
+  return w
 }
+const MAX_WEIGHT = 3.6
 
 /**
  * Scatter dots at random inside the figure. Returns source-px positions plus per-dot depth
@@ -96,6 +112,7 @@ function sampleDots(img: HTMLImageElement, scale: number, vw: number) {
   const insideFrac = inside / (px.length / 16)
   const areaCss = IMG_W * IMG_H * scale * scale * insideFrac
   const target = Math.round(areaCss / ((vw >= 1024 ? SPACING : SPACING * 0.85) ** 2))
+  // (Density varies by `detailWeight`; the total stays about area / spacing².)
 
   const pos = new Float32Array(target * 2)
   const depth = new Float32Array(target)
@@ -112,8 +129,11 @@ function sampleDots(img: HTMLImageElement, scale: number, vw: number) {
     if (px[k + 3] < 128) continue
     const l = (0.2126 * px[k] + 0.7152 * px[k + 1] + 0.0722 * px[k + 2]) / 255
     if (l < 0.16 && Math.random() > 0.12) continue // line work: mostly empty
-    if (Math.random() > 0.3 + 0.7 * l) continue // lighter areas get more dots
-    const d = Math.sqrt(dist[Math.min(gh - 1, (y / G) | 0) * gw + Math.min(gw - 1, (x / G) | 0)] / maxD)
+    const dRaw = dist[Math.min(gh - 1, (y / G) | 0) * gw + Math.min(gw - 1, (x / G) | 0)]
+    const edge = Math.exp(-dRaw / 2.2) // close to the outline
+    const w = (detailWeight(x * 2, y * 2) + 0.9 * edge) * (0.45 + 0.55 * l)
+    if (Math.random() * MAX_WEIGHT > w) continue
+    const d = Math.sqrt(dRaw / maxD)
     pos[n * 2] = x * 2
     pos[n * 2 + 1] = y * 2
     depth[n] = d
@@ -145,10 +165,7 @@ const vertex = /* glsl */ `
   uniform float uExit;
   uniform float uShift;
   uniform float uRot;
-  uniform vec2 uLight;
-  uniform float uLightOn;
-  uniform vec2 uRing;
-  uniform float uRingR;
+  uniform vec2 uStream; // y of the wind ray the dots arrive along
   uniform float uDot;
   attribute vec2 aPos;
   attribute float aDepth;
@@ -175,14 +192,22 @@ const vertex = /* glsl */ `
     vec2 q = vec2(c.x + x2 * persp, c.y + (p.y - c.y) * persp);
     q += vec2(sin(uTime * 1.3 + aRnd * 40.0), cos(uTime * 1.1 + aRnd * 31.0)) * 0.6;
 
-    // Gather: every dot starts on the loading ring and swirls out to its place.
-    float a = aRnd * 6.2831853 * 7.0;
-    vec2 start = uRing + vec2(cos(a), sin(a)) * uRingR;
-    float g = clamp(uGather * 1.7 - hash(aRnd * 7.1) * 0.7, 0.0, 1.0);
-    float ge = 1.0 - pow(1.0 - g, 3.0);
-    vec2 path = q - start;
-    vec2 perp = vec2(-path.y, path.x);
-    q = mix(start, q, ge) + perp * sin(ge * 3.14159) * 0.22;
+    // Intro: blown in from off-screen left like a ray of sand, then settling into place.
+    vec2 target = q;
+    float h1 = hash(aRnd * 7.1);
+    float h2 = hash(aRnd * 3.7 + 1.0);
+    float h3 = hash(aRnd * 11.3 + 2.0);
+    vec2 start = vec2(-30.0 - h1 * uView.x * 0.45, mix(uStream.y, target.y, 0.3) + (h2 - 0.5) * 70.0);
+    float delay = (target.x / uView.x) * 0.25 + h3 * 0.35;
+    float g = clamp(uGather * 1.6 - delay, 0.0, 1.0);
+    float gx = 1.0 - pow(1.0 - g, 2.2);           // eases in like a gust
+    float gy = g * g * (3.0 - 2.0 * g);            // the ray opens up into the figure late
+    q.x = mix(start.x, target.x, gx);
+    q.y = mix(start.y, target.y, gy);
+    float flight = 1.0 - g;                        // 1 while travelling, 0 once landed
+    q.y += sin(q.x * 0.012 + uTime * 2.2 + h2 * 6.0) * 16.0 * flight * (1.0 - flight * 0.3);
+    q.x += sin(uTime * 3.0 + h1 * 20.0) * 6.0 * flight;
+    float ge = g;
 
     // Exit: the dots fly off to the left, the far ones first.
     float e = clamp(uExit * 1.35 - aRnd * 0.35, 0.0, 1.0);
@@ -190,16 +215,15 @@ const vertex = /* glsl */ `
     q.x -= ee * uView.x * (0.8 + aRnd * 0.7);
     q.y += (aRnd - 0.5) * ee * 280.0;
 
-    // Light: front-lit by depth, twinkle on the bigger dots, and the cursor's light nearby.
+    // Light: front-lit by depth, twinkle on the bigger dots.
     float front = 0.3 + 0.7 * pow(aDepth, 0.8);
     float tw = aSize > 1.4 ? 0.65 + 0.35 * sin(uTime * (1.5 + aRnd * 2.5) + aRnd * 60.0) : 1.0;
-    float dl = length(q - uLight);
-    float lit = uLightOn * exp(-(dl * dl) / (2.0 * 170.0 * 170.0));
 
     gl_Position = vec4(q.x / uView.x * 2.0 - 1.0, 1.0 - q.y / uView.y * 2.0, 0.0, 1.0);
-    gl_PointSize = uDot * aSize * uDpr * persp * (1.0 + 0.6 * lit) * 2.6; // x2.6: room for the halo
+    // Sand in flight is finer and dimmer; x2.6 leaves room for the halo.
+    gl_PointSize = uDot * aSize * uDpr * persp * mix(1.0, 0.55, flight) * 2.6;
     float visible = (g > 0.0 ? 1.0 : 0.0) * (1.0 - smoothstep(0.6, 1.0, e));
-    vA = aLum * front * tw * (1.0 + 2.2 * lit) * visible * (0.55 + 0.45 * ge);
+    vA = aLum * front * tw * visible * mix(1.0, 0.45, flight);
   }
 `
 
@@ -211,18 +235,13 @@ const fragment = /* glsl */ `
     if (d > 1.0) discard;
     float core = exp(-d * d * 22.0);
     float halo = exp(-d * d * 5.0) * 0.28;
-    gl_FragColor = vec4(uColor * (core + halo) * vA, 1.0);
+    float i = (core + halo) * vA;
+    gl_FragColor = vec4(uColor * i, min(1.0, i)); // premultiplied: only the light is added
   }
 `
 
 export function DotAstronaut({ scroll, onReady, reduce }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const lightRef = useRef<HTMLDivElement>(null)
-  const [progress, setProgress] = useState(0)
-  const [loading, setLoading] = useState(!reduce)
-  const [dotCount, setDotCount] = useState(0)
-  const [ring, setRing] = useState({ x: 0, y: 0 })
-  const [gathered, setGathered] = useState(!!reduce)
   const onReadyRef = useRef(onReady)
   onReadyRef.current = onReady
 
@@ -247,10 +266,7 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       uExit: { value: 0 },
       uShift: { value: 0 },
       uRot: { value: 0 },
-      uLight: { value: new THREE.Vector2(-9999, -9999) },
-      uLightOn: { value: 0 },
-      uRing: { value: new THREE.Vector2() },
-      uRingR: { value: 46 },
+      uStream: { value: new THREE.Vector2() },
       uDot: { value: 2.2 },
       uColor: { value: DOT_COLOR },
     }
@@ -261,25 +277,27 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       transparent: true,
       depthTest: false,
       depthWrite: false,
-      blending: THREE.AdditiveBlending, // overlapping dots add up: dense areas shine
+      // Pure additive light (premultiplied): overlapping dots add up, nothing dark is drawn.
+      blending: THREE.CustomBlending,
+      blendSrc: THREE.OneFactor,
+      blendDst: THREE.OneFactor,
+      blendSrcAlpha: THREE.OneFactor,
+      blendDstAlpha: THREE.OneFactor,
     })
     let points: THREE.Points | null = null
     let img: HTMLImageElement | null = null
     let lay = layout(1, 1)
 
     const build = () => {
+      if (!img) return
       const vw = canvas.clientWidth
       const vh = canvas.clientHeight
       lay = layout(vw, vh)
-      const rc = ringCenter(lay)
-      setRing(rc)
-      if (!img) return
       const dpr = Math.min(2, window.devicePixelRatio || 1)
       renderer.setPixelRatio(dpr)
       renderer.setSize(vw, vh, false)
       const scale = lay.h / IMG_H
       const s = sampleDots(img, scale, vw)
-      setDotCount(s.count)
       const geo = new THREE.BufferGeometry()
       geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(s.count * 3), 3))
       geo.setAttribute('aPos', new THREE.BufferAttribute(s.pos, 2))
@@ -301,31 +319,19 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       uniforms.uScale.value = scale
       uniforms.uCenter.value.set(lay.left + lay.w / 2, lay.top + lay.h * 0.4)
       uniforms.uDepth.value = lay.w * 0.35
-      uniforms.uRing.value.set(rc.x, rc.y)
+      // The wind ray comes in at the height of the helmet / chest.
+      uniforms.uStream.value.set(0, Math.min(vh * 0.55, lay.top + lay.h * 0.28))
       uniforms.uDot.value = vw >= 1024 ? 2.2 : 1.9
     }
-    build()
 
-    // The cursor is a light: smoothed, with a small glowing point drawn where it is.
-    const target = { x: 0, y: 0, on: 0, nx: 0 }
-    const light = { x: -9999, y: -9999 }
+    // The figure turns gently toward the cursor (no light, no push).
+    let nx = 0
     const onMove = (e: PointerEvent) => {
       if (e.pointerType !== 'mouse') return
-      const r = canvas.getBoundingClientRect()
-      target.x = e.clientX - r.left
-      target.y = e.clientY - r.top
-      target.on = e.clientY >= r.top && e.clientY <= r.bottom ? 1 : 0
-      target.nx = r.width ? target.x / r.width - 0.5 : 0
+      nx = e.clientX / window.innerWidth - 0.5
     }
-    const onLeave = () => (target.on = 0)
-    if (!reduce) {
-      window.addEventListener('pointermove', onMove, { passive: true })
-      document.addEventListener('pointerleave', onLeave)
-    }
+    if (!reduce) window.addEventListener('pointermove', onMove, { passive: true })
 
-    // Loading: the counter runs at least ~1.4s, even when the image is cached.
-    const t0 = performance.now()
-    let loaded = false
     let gatherStart = 0
     const image = new Image()
     image.decoding = 'async'
@@ -336,58 +342,30 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
         if (disposed) return
         img = image
         build()
-        loaded = true
+        if (reduce) {
+          onReadyRef.current()
+          return
+        }
+        gatherStart = performance.now() + 300
+        window.setTimeout(() => onReadyRef.current(), 900)
       })
-      .catch(() => {})
+      .catch(() => onReadyRef.current())
 
     let raf = 0
     let running = false
     let last = performance.now()
     let time = 0
     let rot = 0
-    let lightOn = 0
     const frame = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000)
       last = now
       time += dt
-
-      if (!reduce) {
-        if (!gatherStart) {
-          const p = Math.min(loaded ? 1 : 0.9, (now - t0) / 1400)
-          setProgress(Math.round(p * 100))
-          if (loaded && p >= 1) {
-            gatherStart = now + 250
-            window.setTimeout(() => setLoading(false), 450)
-            window.setTimeout(() => onReadyRef.current(), 650)
-            window.setTimeout(() => setGathered(true), 2400)
-          }
-        } else {
-          uniforms.uGather.value = Math.min(1, Math.max(0, (now - gatherStart) / 2600))
-        }
-      }
+      if (!reduce && gatherStart) uniforms.uGather.value = Math.min(1, Math.max(0, (now - gatherStart) / 3400))
 
       const s = scroll.get()
       uniforms.uShift.value = -s * lay.rise
       uniforms.uExit.value = reduce ? 0 : Math.min(1, Math.max(0, (s - 0.3) / 0.6))
-
-      const k = 1 - Math.pow(0.002, dt)
-      if (light.x < -9000 && target.on) {
-        light.x = target.x
-        light.y = target.y
-      }
-      light.x += (target.x - light.x) * k
-      light.y += (target.y - light.y) * k
-      const wantOn = reduce ? 0 : target.on * uniforms.uGather.value * (1 - uniforms.uExit.value)
-      lightOn += (wantOn - lightOn) * k
-      uniforms.uLight.value.set(light.x, light.y)
-      uniforms.uLightOn.value = lightOn
-      const el = lightRef.current
-      if (el) {
-        el.style.transform = `translate3d(${light.x}px, ${light.y}px, 0)`
-        el.style.opacity = String(lightOn)
-      }
-
-      rot += ((reduce ? 0 : target.nx * 0.35 + Math.sin(time * 0.25) * 0.1) - rot) * (1 - Math.pow(0.05, dt))
+      rot += ((reduce ? 0 : nx * 0.3 + Math.sin(time * 0.25) * 0.1) - rot) * (1 - Math.pow(0.05, dt))
       uniforms.uRot.value = rot
       uniforms.uTime.value = reduce ? 0 : time
 
@@ -403,10 +381,6 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
     const stop = () => {
       running = false
       cancelAnimationFrame(raf)
-    }
-    if (reduce) {
-      setLoading(false)
-      onReadyRef.current()
     }
     start()
 
@@ -429,7 +403,6 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       ro.disconnect()
       window.clearTimeout(resizeT)
       window.removeEventListener('pointermove', onMove)
-      document.removeEventListener('pointerleave', onLeave)
       document.removeEventListener('visibilitychange', onVis)
       points?.geometry.dispose()
       material.dispose()
@@ -437,74 +410,5 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
     }
   }, [reduce, scroll])
 
-  const RING_DOTS = 64
-  const lit = Math.round((progress / 100) * RING_DOTS)
-  return (
-    <>
-      <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 size-full" />
-
-      {/* The light under the cursor. */}
-      <div
-        ref={lightRef}
-        aria-hidden
-        className="pointer-events-none absolute left-0 top-0 opacity-0"
-        style={{ transform: 'translate3d(-9999px,-9999px,0)' }}
-      >
-        <div className="-translate-x-1/2 -translate-y-1/2">
-          <div className="size-2 rounded-full bg-[#f6f8e8] shadow-[0_0_10px_3px_rgb(238_242_220/0.75),0_0_40px_14px_rgb(238_242_220/0.18)]" />
-        </div>
-      </div>
-
-      {/* Loading: a ring of dots with the counter; at 100 the dots stream out of it. */}
-      <AnimatePresence>
-        {loading && (
-          <motion.div
-            key="counter"
-            aria-hidden
-            className="pointer-events-none absolute left-0 top-0"
-            style={{ transform: `translate(${ring.x}px, ${ring.y}px)` }}
-            exit={{ opacity: 0, scale: 1.15, filter: 'blur(4px)', transition: { duration: 0.6, ease: 'easeOut' } }}
-          >
-            <div className="relative -translate-x-1/2 -translate-y-1/2">
-              <div className="relative grid size-[104px] place-items-center">
-                {Array.from({ length: RING_DOTS }, (_, i) => {
-                  const a = (i / RING_DOTS) * Math.PI * 2 - Math.PI / 2
-                  const on = i < lit
-                  return (
-                    <span
-                      key={i}
-                      className="absolute size-[3px] rounded-full bg-[#eef2dc] transition-opacity duration-150"
-                      style={{
-                        left: `calc(50% + ${Math.cos(a) * 48}px - 1.5px)`,
-                        top: `calc(50% + ${Math.sin(a) * 48}px - 1.5px)`,
-                        opacity: on ? 1 : 0.18,
-                        boxShadow: on ? '0 0 6px rgb(238 242 220 / 0.7)' : undefined,
-                      }}
-                    />
-                  )
-                })}
-                <div className="flex flex-col items-center">
-                  <span className="font-mono text-[15px] tabular-nums tracking-[0.06em] text-fg">{String(progress).padStart(3, '0')}</span>
-                  {dotCount > 0 && (
-                    <span className="mt-0.5 font-mono text-[8px] uppercase tracking-[0.18em] text-subtle">{dotCount.toLocaleString('en-US')} dots</span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Hint, like the reference: the cursor is a light. Mouse/trackpad only. */}
-      <motion.p
-        aria-hidden
-        className="pointer-events-none absolute bottom-8 right-5 hidden font-mono text-[10px] uppercase tracking-[0.24em] text-subtle md:bottom-11 md:right-8 xl:right-24 [@media(hover:hover)_and_(pointer:fine)]:block"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: gathered ? 1 : 0 }}
-        transition={{ duration: 1 }}
-      >
-        Move the light
-      </motion.p>
-    </>
-  )
+  return <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 size-full" />
 }

@@ -1,44 +1,18 @@
-import { motion } from 'motion/react'
-import { Galaxy } from './galaxy'
-
 /**
- * The space behind the whole page: one tall, calm dark space painting (generated with
- * Magnific from its watercolor galaxy set, with a gradual fade baked in) that scrolls with the page. It's lightest at the top and
- * gets darker as you go down, so the last section sits on near-black with a few stars.
- * Past the bottom of the painting the page continues in its darkest colour.
- *
- * On top, a fixed layer of twinkling stars and the occasional comet keeps it alive
- * wherever you are on the page.
+ * The page background, like the dot-portrait reference: a plain, very dark olive-black with a
+ * fine film grain on top. The grain is an SVG noise texture, fixed to the screen, that jumps
+ * between a few positions (like film) so it feels alive without drawing attention.
  */
-export const SPACE_BOTTOM = '#050509'
+export const SPACE_BOTTOM = '#12140f'
+
+const NOISE =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")"
 
 export function SpaceBackdrop() {
   return (
     <>
-      <motion.div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-        style={{ background: SPACE_BOTTOM }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.4, ease: 'easeOut' }}
-      >
-        <img
-          src="/images/story/space-long.webp"
-          srcSet="/images/story/space-long-800.webp 800w, /images/story/space-long.webp 1440w"
-          sizes="100vw"
-          alt=""
-          className="block h-auto w-full select-none"
-          draggable={false}
-        />
-        {/* From the work section down the sky gets much darker, so the cards sit on quiet black.
-            The intro is 150svh tall; the fade starts just before it ends. */}
-        <div
-          className="absolute inset-x-0 bottom-0 top-[120svh]"
-          style={{ background: 'linear-gradient(to bottom, rgb(5 5 9 / 0) 0, rgb(5 5 9 / 0.7) 60svh, rgb(5 5 9 / 0.85) 100%)' }}
-        />
-      </motion.div>
-      <Galaxy overlay className="pointer-events-none fixed inset-0 -z-10 size-full" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10" style={{ background: SPACE_BOTTOM }} />
+      <div aria-hidden className="pointer-events-none fixed -inset-[50%] -z-10 opacity-[0.07] motion-safe:animate-[grain_0.9s_steps(6)_infinite]" style={{ backgroundImage: NOISE }} />
     </>
   )
 }
