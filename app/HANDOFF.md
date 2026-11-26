@@ -50,7 +50,15 @@ All generated or taken from Magnific's free stock and credited in the footer. Ge
 - Avatar (Option C): the astronaut character (helmet on) with a moustache and goatee, generated with the astronaut stock image as the only reference; no photo of Bruno used.
 - Free plan limits: images reset at 00:00 UTC; background removal, upscale and expand need a paid plan or the daily free use.
 
-## Next up: Option D — dot astronaut (not started)
+## Option D — dot astronaut (first version built, 2026-11-26)
+
+Built with the fake-depth route (no Magnific credits for 3D): `src/components/dot-astronaut.tsx`, three.js
+points sampled from `astronaut-body.webp` (dark line work left empty), depth from distance to the silhouette
+edge, 0→100 counter in a ring, then the dots gather; cursor pushes dots away; on scroll the figure rises,
+turns and the dots fly off to the left. The story starts typing when the dots start gathering.
+Option C (`claude/portfolio-option-c`) is the fallback with the illustrated astronaut.
+
+Original plan:
 
 Bruno wants to try a new intro: the astronaut rebuilt as a cloud of thousands of small dots, like the
 "Dot Portrait" reference on motionsites.ai (`?prompt=dot-portrait`, preview video `noa-made-of-dots.mp4`):
