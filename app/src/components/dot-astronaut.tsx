@@ -20,7 +20,8 @@ import { DOT_BLENDING, DOT_COLOR, DOT_FRAGMENT } from './dots'
  * - Fake depth: dots further inside the silhouette sit closer; the figure turns gently toward the
  *   cursor, so the dots slide past each other like a 3D scan.
  * - Hovering: the dots drift away from the cursor and drift back.
- * - Scrolling out of the intro, the figure rises, turns and its dots fly off to the left.
+ * - Scrolling out of the intro, the figure rises, turns and its dots fly off to the right, on
+ *   their way to the next section (dot-transit.tsx).
  *
  * One WebGL draw call (three.js Points + a small shader), in screen pixels. The stars, galaxies
  * and planets behind it are a separate page-wide layer (dot-space.tsx).
@@ -305,10 +306,11 @@ const vertex = /* glsl */ `
     float push = uMouseOn * open * (1.0 - smoothstep(0.0, 160.0, mdist));
     q += (mdist > 0.001 ? md / mdist : vec2(0.0)) * push * 44.0 * (0.6 + 0.8 * aRnd);
 
-    // Exit: the dots fly off to the left, the far ones first.
+    // Exit: the dots fly off to the right, the far ones first (they come back in the next section:
+    // dot-transit.tsx).
     float e = clamp(uExit * 1.35 - aRnd * 0.35, 0.0, 1.0);
     float ee = e * e;
-    q.x -= ee * uView.x * (0.8 + aRnd * 0.7);
+    q.x += ee * uView.x * (0.8 + aRnd * 0.7);
     q.y += (aRnd - 0.5) * ee * 280.0;
 
     // Light is baked per dot (aLum). On top: a slow shadow drifting across the figure, like cloud

@@ -1,131 +1,139 @@
 import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, LayoutGroup, motion, useInView, useScroll, useTransform } from 'motion/react'
-import { FILTERS, PROJECTS, type Media, type Project } from '@/data'
-import { cn } from '@/lib/utils'
-import { Badge } from './ui/badge'
+import { AnimatePresence, motion, useInView, useScroll, useTransform } from 'motion/react'
+import { PROJECTS, type Media, type Project } from '@/data'
+import { Button } from './ui/button'
+import { TextRoll } from './fx/text-roll'
+import { ArrowSwap } from './fx/arrow-swap'
 import { ChompVisual } from './chomp-visual'
 
-type Filter = (typeof FILTERS)[number]
+const pad = (n: number) => String(n).padStart(2, '0')
 
+/**
+ * Featured work, after shaahid.in (layout) and thiagovitamina.com (the hairline detail rows):
+ * a centred title, the projects as one column of large images on the right, and on the left a
+ * panel that stays put and describes whichever project is in the middle of the screen.
+ * On wide screens the title stays pinned in the navbar row while the projects scroll under it.
+ * Below `lg` there is no side panel: each image carries its own caption.
+ */
 export function Work() {
-  const [filter, setFilter] = useState<Filter>('All')
-  const list = PROJECTS.filter((p) => filter === 'All' || p.tags.includes(filter))
+  const [active, setActive] = useState(0)
 
   return (
     <section id="work" className="relative mx-auto w-full max-w-[2200px] scroll-mt-16 px-5 pb-40 pt-24 md:px-8 md:pb-56 md:pt-40 xl:px-24">
-      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+      <div className="pointer-events-none z-40 flex justify-center min-[1440px]:sticky min-[1440px]:top-[20px] min-[1440px]:mix-blend-difference">
         <motion.h2
           initial={{ opacity: 0, y: 24, filter: 'blur(8px)' }}
           whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.7, ease: [0.2, 0.7, 0.2, 1] }}
-          className="text-[46px] font-normal leading-none tracking-[-0.035em] text-white md:text-[64px]"
+          className="relative text-[40px] font-medium leading-none tracking-[-0.035em] text-white md:text-[44px]"
         >
-          What I’ve <span className="font-semibold">built</span>
+          Featured Work
+          <sup className="absolute -right-9 top-0 font-mono text-[11px] font-normal tracking-normal text-muted">({pad(PROJECTS.length)})</sup>
         </motion.h2>
-        <LayoutGroup id="filters">
-          <div role="tablist" aria-label="Filter projects" className="-mx-1 flex flex-wrap gap-1.5">
-            {FILTERS.map((f) => {
-              const on = f === filter
-              return (
-                <button
-                  key={f}
-                  role="tab"
-                  aria-selected={on}
-                  onClick={() => setFilter(f)}
-                  className={cn(
-                    'relative h-10 rounded-full px-[18px] text-[16px] outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-accent-2/60',
-                    on ? 'text-bg' : 'text-muted hover:text-fg',
-                  )}
-                >
-                  {on && (
-                    <motion.span
-                      layoutId="filter-pill"
-                      className="absolute inset-0 rounded-full bg-fg"
-                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                    />
-                  )}
-                  {!on && <span className="absolute inset-0 rounded-full border border-line transition-colors duration-300 hover:border-fg/25" />}
-                  <span className="relative">{f}</span>
-                </button>
-              )
-            })}
-          </div>
-        </LayoutGroup>
       </div>
 
-      <motion.ul layout className="mt-14 grid gap-x-6 gap-y-10 sm:grid-cols-2 md:mt-20 md:gap-y-12 lg:grid-cols-3">
-        <AnimatePresence mode="popLayout" initial={false}>
-          {list.map((p, i) => (
-            <ProjectCard key={p.slug} project={p} index={i} />
+      <div className="mx-auto mt-14 grid max-w-[1320px] gap-x-16 md:mt-28 lg:grid-cols-[minmax(0,21rem)_minmax(0,46rem)] lg:justify-between">
+        <aside className="hidden lg:block">
+          <div className="sticky top-[max(7rem,calc(50svh-9rem))]">
+            <AnimatePresence mode="wait" initial={false}>
+              <ProjectInfo key={PROJECTS[active].slug} project={PROJECTS[active]} index={active} />
+            </AnimatePresence>
+          </div>
+        </aside>
+        <ul className="flex flex-col gap-16 lg:gap-28">
+          {PROJECTS.map((p, i) => (
+            <ProjectCard key={p.slug} project={p} onActive={() => setActive(i)} />
           ))}
-        </AnimatePresence>
-      </motion.ul>
+        </ul>
+      </div>
     </section>
   )
 }
 
-function ProjectCard({ project, index }: { project: Project; index: number }) {
+/** The side panel: what the project is, a few facts in hairline rows, and a way in. */
+function ProjectInfo({ project, index }: { project: Project; index: number }) {
+  const rows = [
+    ['Client', project.client],
+    ['Focus', project.tags.join(', ')],
+  ]
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10, filter: 'blur(6px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      exit={{ opacity: 0, y: -8, filter: 'blur(6px)' }}
+      transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
+    >
+      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-subtle">
+        {pad(index + 1)} / {pad(PROJECTS.length)}
+      </p>
+      <h3 className="mt-3 text-[24px] font-medium leading-[1.25] tracking-[-0.02em] text-white [text-wrap:balance]">{project.line}</h3>
+      <dl className="mt-6 text-[14px]">
+        {rows.map(([k, v]) => (
+          <div key={k} className="grid grid-cols-[5rem_1fr] gap-3 border-t border-line py-2.5 last:border-b">
+            <dt className="text-subtle">{k}</dt>
+            <dd className="text-fg">{v}</dd>
+          </div>
+        ))}
+      </dl>
+      {project.href ? (
+        <Button asChild variant="outline" size="sm" className="mt-6">
+          <a href={project.href}>
+            <TextRoll>View project</TextRoll>
+            <ArrowSwap />
+          </a>
+        </Button>
+      ) : (
+        <p className="mt-6 text-[13px] text-subtle">Case study coming soon</p>
+      )}
+    </motion.div>
+  )
+}
+
+function ProjectCard({ project, onActive }: { project: Project; onActive: () => void }) {
   const Wrapper = project.href ? 'a' : 'div'
-  // Entrance: as a row comes into view its cards slide in from the left one after
-  // another (left column first), like cards being dealt onto the table.
-  // While on screen, the image keeps zooming slowly with the scroll.
   const ref = useRef<HTMLLIElement>(null)
+  // While on screen, the image keeps zooming slowly with the scroll.
   const { scrollYProgress: p } = useScroll({ target: ref, offset: ['start end', 'end start'] })
-  const zoom = useTransform(p, [0, 1], [1, 1.12])
-  const order = index % 3
-  // Driven by useInView (not whileInView) so it still plays inside AnimatePresence initial={false}.
-  const inView = useInView(ref, { once: true, amount: 0.2 })
+  const zoom = useTransform(p, [0, 1], [1, 1.1])
+  const inView = useInView(ref, { once: true, amount: 0.15 })
+  // The card crossing the middle of the screen is the one the side panel describes.
+  const centred = useInView(ref, { margin: '-50% 0px -50% 0px' })
+  const onActiveRef = useRef(onActive)
+  useEffect(() => {
+    onActiveRef.current = onActive
+  })
+  useEffect(() => {
+    if (centred) onActiveRef.current()
+  }, [centred])
 
   return (
     <motion.li
       ref={ref}
-      layout
-      exit={{ opacity: 0, scale: 0.94, filter: 'blur(6px)', transition: { duration: 0.25 } }}
-      transition={{ layout: { type: 'spring', stiffness: 260, damping: 30 } }}
+      initial={false}
+      animate={inView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 40, filter: 'blur(8px)' }}
+      transition={{ duration: 0.8, ease: [0.2, 0.7, 0.2, 1] }}
     >
-      <motion.div
-        initial={false}
-        animate={inView ? { opacity: 1, x: 0, rotate: 0, filter: 'blur(0px)' } : { opacity: 0, x: -160, rotate: -3, filter: 'blur(6px)' }}
-        transition={{
-          default: { type: 'spring', stiffness: 120, damping: 20, mass: 0.8, delay: order * 0.1 },
-          opacity: { duration: 0.35, delay: order * 0.1 },
-          filter: { duration: 0.4, delay: order * 0.1 },
-        }}
-        className="origin-bottom-left"
+      <Wrapper
+        {...(project.href ? { href: project.href } : {})}
+        aria-label={`${project.line} — ${project.client}`}
+        data-cursor="view"
+        data-cursor-label={project.href ? 'View' : 'Soon'}
+        className="group/card block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-accent-2/60"
       >
-        {/* Figma "ProjectCard": media on top, then a footer panel with the line, tags and company mark. */}
-        <Wrapper
-          {...(project.href ? { href: project.href } : {})}
-          aria-label={`${project.line} — ${project.client}`}
-          data-cursor="view"
-          data-cursor-label={project.href ? 'View' : 'Soon'}
-          className="group/card flex flex-col gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-accent-2/60"
-        >
-          <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-line bg-card">
-            <motion.div className="size-full" style={{ scale: zoom }}>
-              <CardMedia media={project.media} label={project.client} />
-            </motion.div>
-          </div>
-          <div className="flex items-start gap-3 rounded-b-xl bg-card px-4 py-2.5">
-            <div className="flex min-w-0 flex-1 flex-col gap-2">
-              <p className="text-base leading-[1.4] text-white">
-                <span className="bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-[position:0_100%] bg-no-repeat transition-[background-size] duration-500 ease-[cubic-bezier(.2,.7,.2,1)] group-hover/card:bg-[length:100%_1px]">
-                  {project.line}
-                </span>
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {project.tags.map((t) => (
-                  <Badge key={t}>{t}</Badge>
-                ))}
-              </div>
-            </div>
-            <span title={project.client} className="grid size-6 shrink-0 place-items-center rounded-[5px] border-[0.6px] border-line bg-[#18181b] font-mono text-[8px] text-fg">
-              {project.mark}
-            </span>
-          </div>
-        </Wrapper>
-      </motion.div>
+        <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-line bg-card">
+          <motion.div className="size-full" style={{ scale: zoom }}>
+            <CardMedia media={project.media} label={project.client} />
+          </motion.div>
+        </div>
+        {/* Caption: only where there is no side panel. */}
+        <div className="mt-4 lg:hidden">
+          <p className="text-[19px] font-medium leading-snug tracking-[-0.015em] text-white">{project.line}</p>
+          <p className="mt-1.5 text-[14px] text-muted">
+            {project.client} · {project.tags.join(', ')}
+          </p>
+        </div>
+      </Wrapper>
     </motion.li>
   )
 }

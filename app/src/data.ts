@@ -147,8 +147,6 @@ export const PROJECTS: Project[] = [
   },
 ]
 
-export const FILTERS = ['All', 'AI', 'Design systems', 'UX/UI', 'Interaction'] as const
-
 /** Work that doesn't get a card: shown in the "Other work" overlay. */
 export const OTHER_WORK = [
   { title: 'Pugs rewards dashboard', src: '/images/other/pugs-rewards.webp' },
