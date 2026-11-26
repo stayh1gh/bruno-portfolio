@@ -2,8 +2,7 @@
  * The page background, like the dot-portrait reference: a plain, cold blue-black, the dot space
  * (stars, galaxies, planets: dot-space.tsx) and a
  * fine film grain on top. The grain is an SVG noise texture (cold white specks, contrast raised so
- * it still shows on the near-black), fixed to the screen, that jumps
- * between a few positions (like film) so it feels alive without drawing attention.
+ * it still shows on the near-black), fixed to the screen and still (it does not move).
  */
 import { DotSpace } from './dot-space'
 
@@ -17,7 +16,7 @@ export function SpaceBackdrop() {
     <>
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10" style={{ background: SPACE_BOTTOM }} />
       <DotSpace />
-      <div aria-hidden className="pointer-events-none fixed -inset-[50%] -z-10 opacity-[0.12] motion-safe:animate-[grain_0.9s_steps(6)_infinite]" style={{ backgroundImage: NOISE }} />
+      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 opacity-[0.065]" style={{ backgroundImage: NOISE }} />
     </>
   )
 }

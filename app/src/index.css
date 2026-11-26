@@ -100,14 +100,3 @@ html.custom-cursor,
 html.custom-cursor * {
   cursor: none !important;
 }
-
-/* Film grain on the page background (components/space-backdrop.tsx). */
-@keyframes grain {
-  0% { transform: translate(0, 0); }
-  17% { transform: translate(-3%, 2%); }
-  33% { transform: translate(2%, -4%); }
-  50% { transform: translate(-4%, -2%); }
-  67% { transform: translate(3%, 3%); }
-  83% { transform: translate(-1%, 4%); }
-  100% { transform: translate(0, 0); }
-}
