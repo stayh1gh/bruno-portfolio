@@ -81,11 +81,11 @@ function gauss() {
 function place(vw: number, vh: number) {
   if (vw >= 1024)
     return {
-      galaxy: { x: vw * 0.25, y: vh * 0.2, r: Math.min(vw * 0.13, vh * 0.21) },
+      galaxy: { x: vw * 0.26, y: vh * 0.22, r: Math.min(vw * 0.17, vh * 0.27) },
       planet: { x: vw * 0.9, y: vh * 0.165, r: vh * 0.034 },
     }
   return {
-    galaxy: { x: vw * 0.3, y: vh * 0.17, r: vw * 0.27 },
+    galaxy: { x: vw * 0.32, y: vh * 0.17, r: Math.min(vw * 0.33, vh * 0.2) },
     planet: { x: vw * 0.84, y: vh * 0.24, r: vh * 0.016 },
   }
 }
@@ -111,7 +111,7 @@ function build(vw: number, vh: number) {
 
   // Galaxy: a bright core, two spiral arms that thin out, and a faint haze between them.
   const g = at.galaxy
-  const gN = Math.round(Math.min(3600, (g.r * g.r) / 11))
+  const gN = Math.round(Math.min(5200, (g.r * g.r) / 9))
   for (let i = 0; i < gN; i++) {
     const pick = Math.random()
     let r: number
@@ -120,19 +120,19 @@ function build(vw: number, vh: number) {
     if (pick < 0.22) {
       r = Math.abs(gauss()) * 0.11 * g.r
       a = Math.random() * Math.PI * 2
-      lum = 0.5 + Math.random() * 0.4
+      lum = 0.7 + Math.random() * 0.3
     } else if (pick < 0.82) {
       const t = Math.pow(Math.random(), 0.8)
       r = g.r * (0.1 + 0.9 * t) + gauss() * g.r * 0.035 * (0.6 + t)
       a = (Math.random() < 0.5 ? 0 : Math.PI) + t * 3.7 + gauss() * 0.11
-      lum = (0.6 - 0.38 * t) * (0.7 + Math.random() * 0.6)
+      lum = (0.85 - 0.45 * t) * (0.7 + Math.random() * 0.6)
     } else {
       r = Math.sqrt(Math.random()) * g.r
       a = Math.random() * Math.PI * 2
-      lum = 0.1 + Math.random() * 0.14
+      lum = 0.16 + Math.random() * 0.18
     }
     const z = gauss() * g.r * 0.035 * Math.exp(-r / (g.r * 0.5))
-    add(GALAXY, g.x, g.y, Math.cos(a) * r, Math.sin(a) * r, z, lum, Math.random() < 0.05 ? 1.0 + Math.random() * 0.5 : small())
+    add(GALAXY, g.x, g.y, Math.cos(a) * r, Math.sin(a) * r, z, Math.min(1, lum), Math.random() < 0.08 ? 1.1 + Math.random() * 0.6 : 0.6 + Math.random() * 0.4)
   }
 
   // Planet: dots at random on a sphere, with a few darker patches.
