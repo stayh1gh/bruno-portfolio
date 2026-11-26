@@ -5,8 +5,8 @@ import type { MotionValue } from 'motion/react'
 /**
  * Option D: the intro astronaut as a glowing cloud of dots, after motionsites.ai's "Dot Portrait".
  *
- * - Intro: the dots blow in from off-screen left, like a ray of sand carried by the wind, then
- *   settle into the astronaut.
+ * - Intro: the dots blow in from off-screen left as one ray of sand, flying together and
+ *   undulating like a slow wave, then the ray opens up into the astronaut.
  * - Dots are scattered at random inside the illustrated astronaut (`astronaut-body.webp`). Most of
  *   them sit on the drawing's contours (line work, shadow edges, the silhouette), which read as
  *   bright dotted lines, as in the reference; a dim fill lies between them, denser on the helmet.
@@ -27,7 +27,7 @@ const SRC = '/images/story/astronaut-body.webp'
 const IMG_W = 1304
 const IMG_H = 2311
 const DOT_COLOR = new THREE.Color('#e6ebd8') // pale cream with a faint green, like the reference
-const SPACING = 4.1 // average gap between dots, css px (it varies: denser on contours and the helmet)
+const SPACING = 4.9 // average gap between dots, css px (it varies: denser on contours and the helmet)
 
 type Props = {
   /** 0 → 1 while the intro is pinned. */
@@ -67,8 +67,8 @@ function detailWeight(x: number, y: number) {
   }
   return w
 }
-const FILL = 0.5 // how much of the weight goes to the dim fill between contours
-const EDGE = 2.5 // ...and to the contour lines
+const FILL = 0.55 // how much of the weight goes to the dim fill between contours
+const EDGE = 2.1 // ...and to the contour lines
 const MAX_WEIGHT = 3.6
 
 /**
@@ -137,7 +137,7 @@ function sampleDots(img: HTMLImageElement, scale: number, vw: number) {
       const i = y * pw + x
       const gx = lumMap[i - pw + 1] + 2 * lumMap[i + 1] + lumMap[i + pw + 1] - lumMap[i - pw - 1] - 2 * lumMap[i - 1] - lumMap[i + pw - 1]
       const gy = lumMap[i + pw - 1] + 2 * lumMap[i + pw] + lumMap[i + pw + 1] - lumMap[i - pw - 1] - 2 * lumMap[i - pw] - lumMap[i - pw + 1]
-      edgeMap[i] = smooth(0.3, 1.5, Math.hypot(gx, gy))
+      edgeMap[i] = smooth(0.5, 1.9, Math.hypot(gx, gy)) // fine detail (faint shading edges) is dropped
     }
 
   // Depth: distance to the silhouette edge on a coarse grid (two-pass chamfer).
@@ -223,7 +223,7 @@ function sampleDots(img: HTMLImageElement, scale: number, vw: number) {
     depth[n] = Math.sqrt(dRaw / maxD)
     lum[n] = Math.min(1, b * (0.8 + Math.random() * 0.4))
     const big = Math.random() < 0.06
-    size[n] = big ? 1.3 + Math.random() * 0.9 : 0.6 + Math.random() * 0.45
+    size[n] = big ? 1.4 + Math.random() * 0.9 : 0.72 + Math.random() * 0.45
     rnd[n] = Math.random()
     n++
   }
@@ -276,22 +276,21 @@ const vertex = /* glsl */ `
     vec2 q = vec2(c.x + x2 * persp, c.y + (p.y - c.y) * persp);
     q += vec2(sin(uTime * 1.3 + aRnd * 40.0), cos(uTime * 1.1 + aRnd * 31.0)) * 0.6;
 
-    // Intro: blown in from off-screen left like a ray of sand, then settling into place.
+    // Intro: one ray of sand blown in from off-screen left. The dots fly together as a single
+    // ribbon that undulates like a slow wave, then the ribbon opens up into the figure.
     vec2 target = q;
-    float h1 = hash(aRnd * 7.1);
+    float h1 = hash(aRnd * 7.1);            // place along the ray: 0 head → 1 tail
     float h2 = hash(aRnd * 3.7 + 1.0);
     float h3 = hash(aRnd * 11.3 + 2.0);
-    vec2 start = vec2(-30.0 - h1 * uView.x * 0.45, mix(uStream.y, target.y, 0.3) + (h2 - 0.5) * 70.0);
-    float delay = (target.x / uView.x) * 0.25 + h3 * 0.35;
-    float g = clamp(uGather * 1.6 - delay, 0.0, 1.0);
-    float gx = 1.0 - pow(1.0 - g, 2.2);           // eases in like a gust
-    float gy = g * g * (3.0 - 2.0 * g);            // the ray opens up into the figure late
-    q.x = mix(start.x, target.x, gx);
-    q.y = mix(start.y, target.y, gy);
-    float flight = 1.0 - g;                        // 1 while travelling, 0 once landed
-    q.y += sin(q.x * 0.012 + uTime * 2.2 + h2 * 6.0) * 16.0 * flight * (1.0 - flight * 0.3);
-    q.x += sin(uTime * 3.0 + h1 * 20.0) * 6.0 * flight;
-    float ge = g;
+    float g = clamp(uGather * 1.4 - h1 * 0.4, 0.0, 1.0);
+    float gx = 1.0 - pow(1.0 - g, 1.8);
+    float open = smoothstep(0.5, 1.0, g);  // 0 in the ray → 1 landed
+    float flight = 1.0 - open;
+    q.x = mix(-40.0 - h1 * uView.x * 0.3, target.x, gx);
+    // The same wave for every dot (phase from position and time only), so the ray moves as one.
+    float wave = sin(q.x * 0.0062 - uTime * 1.6) * 30.0 + sin(q.x * 0.0029 - uTime * 0.85) * 16.0;
+    float across = (h2 + h3 - 1.0) * 30.0; // thin ribbon, densest along its middle
+    q.y = mix(uStream.y + wave + across, target.y, open);
 
     // Exit: the dots fly off to the left, the far ones first.
     float e = clamp(uExit * 1.35 - aRnd * 0.35, 0.0, 1.0);
@@ -307,9 +306,9 @@ const vertex = /* glsl */ `
 
     gl_Position = vec4(q.x / uView.x * 2.0 - 1.0, 1.0 - q.y / uView.y * 2.0, 0.0, 1.0);
     // Sand in flight is finer and dimmer; x2.6 leaves room for the halo.
-    gl_PointSize = uDot * aSize * uDpr * persp * mix(1.0, 0.55, flight) * 2.6;
+    gl_PointSize = uDot * aSize * uDpr * persp * mix(1.0, 0.7, flight) * 2.6;
     float visible = (g > 0.0 ? 1.0 : 0.0) * (1.0 - smoothstep(0.6, 1.0, e));
-    vA = aLum * front * tw * visible * mix(1.0, 0.45, flight);
+    vA = aLum * front * tw * visible * mix(1.0, 0.6, flight);
   }
 `
 
@@ -407,7 +406,7 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       uniforms.uDepth.value = lay.w * 0.35
       // The wind ray comes in at the height of the helmet / chest.
       uniforms.uStream.value.set(0, Math.min(vh * 0.55, lay.top + lay.h * 0.28))
-      uniforms.uDot.value = vw >= 1024 ? 2.2 : 1.9
+      uniforms.uDot.value = vw >= 1024 ? 2.8 : 2.3
     }
 
     // The figure turns gently toward the cursor (no light, no push).
@@ -446,7 +445,7 @@ export function DotAstronaut({ scroll, onReady, reduce }: Props) {
       const dt = Math.min(0.05, (now - last) / 1000)
       last = now
       time += dt
-      if (!reduce && gatherStart) uniforms.uGather.value = Math.min(1, Math.max(0, (now - gatherStart) / 3400))
+      if (!reduce && gatherStart) uniforms.uGather.value = Math.min(1, Math.max(0, (now - gatherStart) / 3800))
 
       const s = scroll.get()
       uniforms.uShift.value = -s * lay.rise
