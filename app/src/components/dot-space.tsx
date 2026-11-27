@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { useReducedMotion } from 'motion/react'
-import { DOT_BLENDING, DOT_COLOR, DOT_FRAGMENT } from './dots'
+import { DOT_BLENDING, DOT_COLOR, DOT_FRAGMENT, seeded } from './dots'
 
 /**
  * The space behind the whole page, drawn in the same dots as the astronaut: a field of stars, a
@@ -82,17 +82,6 @@ const vertex = /* glsl */ `
     vA = lum * vis * fade;
   }
 `
-
-/** Seeded random numbers, so rebuilding (resize, page height change) keeps every dot where it was. */
-function seeded(seed: number) {
-  let a = seed
-  return () => {
-    a = (a + 0x6d2b79f5) | 0
-    let t = Math.imul(a ^ (a >>> 15), 1 | a)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
 
 type Spot = { x: number; y: number; r: number }
 

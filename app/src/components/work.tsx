@@ -1,74 +1,103 @@
-import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion, useInView, useScroll, useTransform } from 'motion/react'
+import { useEffect, useMemo, useRef } from 'react'
+import { motion, motionValue, useInView, useReducedMotion, useTransform, type MotionValue } from 'motion/react'
 import { PROJECTS, type Media, type Project } from '@/data'
 import { Button } from './ui/button'
 import { TextRoll } from './fx/text-roll'
 import { ArrowSwap } from './fx/arrow-swap'
 import { ChompVisual } from './chomp-visual'
+import { DotProjects } from './dot-projects'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
+/** Screen heights of scrolling each project gets while the section is pinned. */
+const PER_PROJECT = 0.9
+
 /**
- * Featured work, after shaahid.in (layout) and thiagovitamina.com (the hairline detail rows):
- * a centred title, the projects as one column of large images on the right, and on the left a
- * panel that stays put and describes whichever project is in the middle of the screen.
- * On wide screens the title stays pinned in the navbar row while the projects scroll under it.
- * Below `lg` there is no side panel: each image carries its own caption.
+ * Featured work: a pinned stage that shows one project at a time, image on the left (near the
+ * centre) and its text on the right, both floating gently as if weightless. Scrolling steps
+ * through the projects; each one is formed by dots, and vanishes into dots that fly off and come
+ * back as the next (dot-projects.tsx runs that sequence and sets `opacities` and `float`).
+ *
+ * All projects are laid out on top of each other in the same two slots, so the dots can measure
+ * where every image and line of text will be.
  */
 export function Work() {
-  const [active, setActive] = useState(0)
+  const reduce = !!useReducedMotion()
+  const sectionRef = useRef<HTMLElement>(null)
+  const stageRef = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
+  const panelRefs = useRef<(HTMLDivElement | null)[]>([])
+  const opacities = useMemo(() => PROJECTS.map(() => motionValue(0)), [])
+  const float = useMemo(() => ({ cx: motionValue(0), cy: motionValue(0), cr: motionValue(0), tx: motionValue(0), ty: motionValue(0) }), [])
 
   return (
-    <section id="work" className="relative mx-auto w-full max-w-[2200px] scroll-mt-16 px-5 pb-40 pt-24 md:px-8 md:pb-56 md:pt-40 xl:px-24">
-      <div className="pointer-events-none z-40 flex justify-center min-[1440px]:sticky min-[1440px]:top-[20px] min-[1440px]:mix-blend-difference">
-        <motion.h2
-          initial={{ opacity: 0, y: 24, filter: 'blur(8px)' }}
-          whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.7, ease: [0.2, 0.7, 0.2, 1] }}
-          className="relative text-[40px] font-medium leading-none tracking-[-0.035em] text-white md:text-[44px]"
-        >
-          Featured Work
-          <sup className="absolute -right-9 top-0 font-mono text-[11px] font-normal tracking-normal text-muted">({pad(PROJECTS.length)})</sup>
-        </motion.h2>
-      </div>
+    <section id="work" ref={sectionRef} aria-label="Featured work" className="relative" style={{ height: `${(PROJECTS.length * PER_PROJECT + 1) * 100}svh` }}>
+      <div ref={stageRef} className="sticky top-0 flex h-svh flex-col overflow-hidden px-5 pb-10 pt-[92px] md:px-8 md:pt-[112px] xl:px-24">
+        <DotProjects sectionRef={sectionRef} stageRef={stageRef} cardRef={cardRef} panelRefs={panelRefs} opacities={opacities} float={float} perProject={PER_PROJECT} reduce={reduce} />
 
-      <div className="mx-auto mt-14 grid max-w-[1320px] gap-x-16 md:mt-28 lg:grid-cols-[minmax(0,21rem)_minmax(0,46rem)] lg:justify-between">
-        <aside className="hidden lg:block">
-          <div className="sticky top-[max(7rem,calc(50svh-9rem))]">
-            <AnimatePresence mode="wait" initial={false}>
-              <ProjectInfo key={PROJECTS[active].slug} project={PROJECTS[active]} index={active} />
-            </AnimatePresence>
+        <div className="flex justify-center">
+          <motion.h2
+            initial={{ opacity: 0, y: 24, filter: 'blur(8px)' }}
+            whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.7, ease: [0.2, 0.7, 0.2, 1] }}
+            className="relative text-[38px] font-medium leading-none tracking-[-0.035em] text-white md:text-[48px]"
+          >
+            Featured Work
+            <sup className="absolute -right-9 top-0 font-mono text-[11px] font-normal tracking-normal text-muted">({pad(PROJECTS.length)})</sup>
+          </motion.h2>
+        </div>
+
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-8 lg:flex-row lg:gap-14">
+          {/* Image slot */}
+          <div ref={cardRef} className="relative aspect-[16/10] w-full max-w-[34rem] shrink-0 lg:w-[min(52vw,47.5rem,calc((100svh-19rem)*1.6))] lg:max-w-none">
+            <motion.div className="size-full" style={{ x: float.cx, y: float.cy, rotate: float.cr }}>
+              {PROJECTS.map((p, i) => (
+                <ProjectCard key={p.slug} project={p} opacity={opacities[i]} />
+              ))}
+            </motion.div>
           </div>
-        </aside>
-        <ul className="flex flex-col gap-16 lg:gap-28">
-          {PROJECTS.map((p, i) => (
-            <ProjectCard key={p.slug} project={p} onActive={() => setActive(i)} />
-          ))}
-        </ul>
+          {/* Text slot: every panel in the same cell, so it is as tall as the tallest. */}
+          <div className="w-full max-w-[34rem] lg:w-[22rem] lg:max-w-none">
+            <motion.div className="grid" style={{ x: float.tx, y: float.ty }}>
+              {PROJECTS.map((p, i) => (
+                <ProjectInfo
+                  key={p.slug}
+                  project={p}
+                  index={i}
+                  opacity={opacities[i]}
+                  panelRef={(el) => {
+                    panelRefs.current[i] = el
+                  }}
+                />
+              ))}
+            </motion.div>
+          </div>
+        </div>
       </div>
     </section>
   )
 }
 
-/** The side panel: what the project is, a few facts in hairline rows, and a way in. */
-function ProjectInfo({ project, index }: { project: Project; index: number }) {
+/** Only the project on show can be clicked or focused. */
+function useOnShow(opacity: MotionValue<number>) {
+  return useTransform(opacity, (v) => (v > 0.5 ? 'auto' : 'none'))
+}
+
+/** What the project is, a few facts in hairline rows, and a way in. */
+function ProjectInfo({ project, index, opacity, panelRef }: { project: Project; index: number; opacity: MotionValue<number>; panelRef: (el: HTMLDivElement | null) => void }) {
+  const pointerEvents = useOnShow(opacity)
   const rows = [
     ['Client', project.client],
     ['Focus', project.tags.join(', ')],
   ]
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10, filter: 'blur(6px)' }}
-      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-      exit={{ opacity: 0, y: -8, filter: 'blur(6px)' }}
-      transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
-    >
+    <motion.div ref={panelRef} style={{ opacity, pointerEvents }} className="col-start-1 row-start-1">
       <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-subtle">
         {pad(index + 1)} / {pad(PROJECTS.length)}
       </p>
-      <h3 className="mt-3 text-[24px] font-medium leading-[1.25] tracking-[-0.02em] text-white [text-wrap:balance]">{project.line}</h3>
-      <dl className="mt-6 text-[14px]">
+      <h3 className="mt-3 text-[26px] font-medium leading-[1.2] tracking-[-0.025em] text-white [text-wrap:balance] lg:text-[34px]">{project.line}</h3>
+      <dl className="mt-5 text-[14px] lg:mt-7">
         {rows.map(([k, v]) => (
           <div key={k} className="grid grid-cols-[5rem_1fr] gap-3 border-t border-line py-2.5 last:border-b">
             <dt className="text-subtle">{k}</dt>
@@ -77,64 +106,33 @@ function ProjectInfo({ project, index }: { project: Project; index: number }) {
         ))}
       </dl>
       {project.href ? (
-        <Button asChild variant="outline" size="sm" className="mt-6">
+        <Button asChild variant="outline" size="sm" className="mt-5 lg:mt-6">
           <a href={project.href}>
             <TextRoll>View project</TextRoll>
             <ArrowSwap />
           </a>
         </Button>
       ) : (
-        <p className="mt-6 text-[13px] text-subtle">Case study coming soon</p>
+        <p className="mt-5 text-[13px] text-subtle lg:mt-6">Case study coming soon</p>
       )}
     </motion.div>
   )
 }
 
-function ProjectCard({ project, onActive }: { project: Project; onActive: () => void }) {
-  const Wrapper = project.href ? 'a' : 'div'
-  const ref = useRef<HTMLLIElement>(null)
-  // While on screen, the image keeps zooming slowly with the scroll.
-  const { scrollYProgress: p } = useScroll({ target: ref, offset: ['start end', 'end start'] })
-  const zoom = useTransform(p, [0, 1], [1, 1.1])
-  const inView = useInView(ref, { once: true, amount: 0.15 })
-  // The card crossing the middle of the screen is the one the side panel describes.
-  const centred = useInView(ref, { margin: '-50% 0px -50% 0px' })
-  const onActiveRef = useRef(onActive)
-  useEffect(() => {
-    onActiveRef.current = onActive
-  })
-  useEffect(() => {
-    if (centred) onActiveRef.current()
-  }, [centred])
-
+function ProjectCard({ project, opacity }: { project: Project; opacity: MotionValue<number> }) {
+  const Wrapper = project.href ? motion.a : motion.div
+  const pointerEvents = useOnShow(opacity)
   return (
-    <motion.li
-      ref={ref}
-      initial={false}
-      animate={inView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 40, filter: 'blur(8px)' }}
-      transition={{ duration: 0.8, ease: [0.2, 0.7, 0.2, 1] }}
+    <Wrapper
+      {...(project.href ? { href: project.href } : {})}
+      aria-label={`${project.line} — ${project.client}`}
+      data-cursor="view"
+      data-cursor-label={project.href ? 'View' : 'Soon'}
+      style={{ opacity, pointerEvents }}
+      className="group/card absolute inset-0 block overflow-hidden rounded-xl border border-line bg-card shadow-[0_30px_80px_-20px_rgb(0_0_0/0.7)] outline-none focus-visible:ring-2 focus-visible:ring-accent-2/60"
     >
-      <Wrapper
-        {...(project.href ? { href: project.href } : {})}
-        aria-label={`${project.line} — ${project.client}`}
-        data-cursor="view"
-        data-cursor-label={project.href ? 'View' : 'Soon'}
-        className="group/card block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-accent-2/60"
-      >
-        <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-line bg-card">
-          <motion.div className="size-full" style={{ scale: zoom }}>
-            <CardMedia media={project.media} label={project.client} />
-          </motion.div>
-        </div>
-        {/* Caption: only where there is no side panel. */}
-        <div className="mt-4 lg:hidden">
-          <p className="text-[19px] font-medium leading-snug tracking-[-0.015em] text-white">{project.line}</p>
-          <p className="mt-1.5 text-[14px] text-muted">
-            {project.client} · {project.tags.join(', ')}
-          </p>
-        </div>
-      </Wrapper>
-    </motion.li>
+      <CardMedia media={project.media} label={project.client} />
+    </Wrapper>
   )
 }
 

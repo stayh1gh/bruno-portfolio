@@ -1,7 +1,7 @@
 import { useEffect, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import type { MotionValue } from 'motion/react'
-import { DOT_BLENDING, DOT_COLOR, DOT_FRAGMENT } from './dots'
+import { DOT_BLENDING, DOT_COLOR, DOT_FRAGMENT, seeded, textBoxes } from './dots'
 
 /**
  * The dots travel from the astronaut to the statement and become its text. After they leave the
@@ -62,37 +62,6 @@ const vertex = /* glsl */ `
     vA = bright * (1.0 - gone) * (g > 0.0 ? 1.0 : 0.0);
   }
 `
-
-function seeded(seed: number) {
-  let a = seed
-  return () => {
-    a = (a + 0x6d2b79f5) | 0
-    let t = Math.imul(a ^ (a >>> 15), 1 | a)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
-/** One box per visible character (and the button's outline), relative to the block. */
-function textBoxes(block: HTMLElement) {
-  const origin = block.getBoundingClientRect()
-  const boxes: { x: number; y: number; w: number; h: number }[] = []
-  const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT)
-  const range = document.createRange()
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    const text = node.textContent ?? ''
-    for (let i = 0; i < text.length; i++) {
-      if (!text[i].trim()) continue
-      range.setStart(node, i)
-      range.setEnd(node, i + 1)
-      const r = range.getClientRects()[0]
-      if (!r || !r.width) continue
-      // Keep to the band where the letters are (not the full line height).
-      boxes.push({ x: r.left - origin.left, y: r.top - origin.top + r.height * 0.3, w: r.width, h: r.height * 0.48 })
-    }
-  }
-  return boxes
-}
 
 type Props = {
   /** The statement's text block: where the dots land. */
