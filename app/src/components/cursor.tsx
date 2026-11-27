@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
-import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring } from 'motion/react'
+import { useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion, useMotionValue } from 'motion/react'
 
 /**
  * Custom cursor: a single frosted-glass ring (see-through, blurring what's under it)
- * that follows the pointer.
+ * that sits exactly on the pointer. Its position is written straight from the pointer event, with
+ * no easing: a spring here made the ring trail the hand (about 60ms behind, so tens of pixels at
+ * normal speeds), which read as lag. Only its size and colour are eased.
  * - Over links and buttons the ring grows and fills softly.
  * - Over a project card (`data-cursor="view"`) it becomes a filled disc that says "View".
  * - It shrinks a little while pressed and hides when the pointer leaves the window.
@@ -19,13 +21,10 @@ export function Cursor() {
   const [label, setLabel] = useState('View')
   const [visible, setVisible] = useState(false)
   const [down, setDown] = useState(false)
-  const reduce = useReducedMotion()
-
   const x = useMotionValue(-100)
   const y = useMotionValue(-100)
-  const spring = reduce ? { stiffness: 2000, damping: 100 } : { stiffness: 900, damping: 55, mass: 0.3 } // only a ring now: it stays close to the pointer
-  const rx = useSpring(x, spring)
-  const ry = useSpring(y, spring)
+  // What the pointer is over, kept outside React so a move only re-renders when it changes.
+  const over = useRef<{ mode: Mode; label: string; visible: boolean }>({ mode: 'default', label: 'View', visible: false })
 
   useEffect(() => {
     const mq = window.matchMedia('(hover: hover) and (pointer: fine)')
@@ -44,15 +43,28 @@ export function Cursor() {
       if (e.pointerType !== 'mouse') return
       x.set(e.clientX)
       y.set(e.clientY)
-      setVisible(true)
-      const t = e.target as Element | null
+      const o = over.current
+      if (!o.visible) {
+        o.visible = true
+        setVisible(true)
+      }
+      const t = e.target instanceof Element ? e.target : null
       const view = t?.closest<HTMLElement>('[data-cursor="view"]')
-      if (view) {
-        setMode('view')
-        setLabel(view.dataset.cursorLabel ?? 'View')
-      } else setMode(t?.closest(INTERACTIVE) ? 'link' : 'default')
+      const next: Mode = view ? 'view' : t?.closest(INTERACTIVE) ? 'link' : 'default'
+      if (next !== o.mode) {
+        o.mode = next
+        setMode(next)
+      }
+      const nextLabel = view?.dataset.cursorLabel ?? 'View'
+      if (view && nextLabel !== o.label) {
+        o.label = nextLabel
+        setLabel(nextLabel)
+      }
     }
-    const leave = () => setVisible(false)
+    const leave = () => {
+      over.current.visible = false
+      setVisible(false)
+    }
     const press = () => setDown(true)
     const release = () => setDown(false)
 
@@ -82,7 +94,7 @@ export function Cursor() {
 
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 z-[100]">
-      <motion.div className="absolute left-0 top-0" style={{ x: rx, y: ry }}>
+      <motion.div className="absolute left-0 top-0 will-change-transform" style={{ x, y }}>
         <motion.div
           className="grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border"
           initial={false}
