@@ -9,7 +9,8 @@ import { DOT_BLENDING, DOT_COLOR, DOT_FRAGMENT, seeded } from './dots'
  * that sits behind all the content; everything is dimmer and finer than the astronaut, so it
  * stays a background.
  *
- * - Scrolling moves it slowly (parallax). The stars wrap around, so they never run out and
+ * - Scrolling moves it slowly (parallax), except while the Featured Work stage is pinned: there
+ *   it holds still, so only that section's dots move. The stars wrap around, so they never run out and
  *   continue behind every section. The galaxy (upper left) and the planet (upper right) belong
  *   to the intro and drift up out of view with it.
  * - The galaxy turns slowly; the planet spins and is lit from the upper left like the astronaut,
@@ -243,7 +244,15 @@ export function DotSpace() {
       par += ((reduce ? 0 : nx * 0.3) - par) * (1 - Math.pow(0.05, dt))
       uniforms.uTime.value = reduce ? 0 : time
       uniforms.uFade.value = reduce ? 1 : Math.min(1, (now - started) / 2800)
-      uniforms.uScroll.value = window.scrollY
+      // While the Featured Work stage is pinned (#work), the page scrolls but nothing moves on
+      // screen, so the background holds still too: that stretch of scrolling is left out.
+      const work = document.getElementById('work')
+      let held = 0
+      if (work) {
+        const r = work.getBoundingClientRect()
+        held = Math.min(Math.max(0, -r.top), Math.max(0, r.height - window.innerHeight))
+      }
+      uniforms.uScroll.value = window.scrollY - held
       uniforms.uPar.value = par
       renderer.render(scene, camera)
       raf = requestAnimationFrame(frame)

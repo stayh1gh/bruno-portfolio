@@ -15,25 +15,24 @@ const PER_PROJECT = 0.9
 /**
  * Featured work: a pinned stage that shows one project at a time, image on the left (near the
  * centre) and its text on the right, both floating gently as if weightless. Scrolling steps
- * through the projects; each one arrives as a ray of dots that expands into a cloud and reveals
- * it, and leaves as a cloud that closes into a ray and flies off while the next ray comes in (dot-projects.tsx runs that sequence and sets `opacities` and `float`).
+ * through the projects; each image arrives as a ray of dots that expands into a cloud and reveals
+ * it, and leaves as a cloud that closes into a ray and flies off while the next ray comes in; the
+ * text just fades (dot-projects.tsx runs that sequence and sets `opacities` and `float`).
  *
- * All projects are laid out on top of each other in the same two slots, so the dots can measure
- * where the image and every line of text will be.
+ * All projects are laid out on top of each other in the same two slots and crossfade.
  */
 export function Work() {
   const reduce = !!useReducedMotion()
   const sectionRef = useRef<HTMLElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
-  const panelRefs = useRef<(HTMLDivElement | null)[]>([])
   const opacities = useMemo(() => PROJECTS.map(() => motionValue(0)), [])
   const float = useMemo(() => ({ cx: motionValue(0), cy: motionValue(0), cr: motionValue(0), tx: motionValue(0), ty: motionValue(0) }), [])
 
   return (
     <section id="work" ref={sectionRef} aria-label="Featured work" className="relative" style={{ height: `${(PROJECTS.length * PER_PROJECT + 1) * 100}svh` }}>
       <div ref={stageRef} className="sticky top-0 flex h-svh flex-col overflow-hidden px-5 pb-10 pt-[92px] md:px-8 md:pt-[112px] xl:px-24">
-        <DotProjects sectionRef={sectionRef} stageRef={stageRef} cardRef={cardRef} panelRefs={panelRefs} opacities={opacities} float={float} perProject={PER_PROJECT} reduce={reduce} />
+        <DotProjects sectionRef={sectionRef} stageRef={stageRef} cardRef={cardRef} opacities={opacities} float={float} perProject={PER_PROJECT} reduce={reduce} />
 
         <div className="flex justify-center">
           <motion.h2
@@ -61,15 +60,7 @@ export function Work() {
           <div className="w-full max-w-[34rem] lg:w-[22rem] lg:max-w-none">
             <motion.div className="grid" style={{ x: float.tx, y: float.ty }}>
               {PROJECTS.map((p, i) => (
-                <ProjectInfo
-                  key={p.slug}
-                  project={p}
-                  index={i}
-                  opacity={opacities[i]}
-                  panelRef={(el) => {
-                    panelRefs.current[i] = el
-                  }}
-                />
+                <ProjectInfo key={p.slug} project={p} index={i} opacity={opacities[i]} />
               ))}
             </motion.div>
           </div>
@@ -85,14 +76,14 @@ function useOnShow(opacity: MotionValue<number>) {
 }
 
 /** What the project is, a few facts in hairline rows, and a way in. */
-function ProjectInfo({ project, index, opacity, panelRef }: { project: Project; index: number; opacity: MotionValue<number>; panelRef: (el: HTMLDivElement | null) => void }) {
+function ProjectInfo({ project, index, opacity }: { project: Project; index: number; opacity: MotionValue<number> }) {
   const pointerEvents = useOnShow(opacity)
   const rows = [
     ['Client', project.client],
     ['Focus', project.tags.join(', ')],
   ]
   return (
-    <motion.div ref={panelRef} style={{ opacity, pointerEvents }} className="col-start-1 row-start-1">
+    <motion.div style={{ opacity, pointerEvents }} className="col-start-1 row-start-1">
       <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-subtle">
         {pad(index + 1)} / {pad(PROJECTS.length)}
       </p>

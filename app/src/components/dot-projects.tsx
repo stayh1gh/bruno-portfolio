@@ -2,15 +2,15 @@ import { useEffect, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import type { MotionValue } from 'motion/react'
 import { PROJECTS } from '@/data'
-import { DOT_BLENDING, DOT_COLOR, DOT_FRAGMENT, seeded, textBoxes } from './dots'
+import { DOT_BLENDING, DOT_COLOR, DOT_FRAGMENT, seeded } from './dots'
 
 /**
  * Featured work, carried by dots. The section is pinned; scrolling steps through the projects,
  * one at a time. For each step the same cloud of dots:
  *
  *   comes in as a ray from the left and expands into a soft cloud over where the project goes
- *   (an even scatter over the image, dotted lines over the text) → the real image and text fade
- *   in as the dots fade → hold → the project fades back into the cloud → the cloud closes into a
+ *   (an even scatter over the image) → the real image fades in as the dots fade, and the text
+ *   simply fades in beside it → hold → the project fades back into the cloud → the cloud closes into a
  *   ray that flies off to the right, while the next ray comes in.
  *
  * The first project only has the ray coming in; after the last one there is only the ray leaving.
@@ -41,19 +41,17 @@ const vertex = /* glsl */ `
   uniform float uAlpha;
   uniform vec2 uCard;   // card centre
   uniform vec3 uFloatI; // image: x, y, rotation (radians)
-  uniform vec2 uFloatT; // text: x, y
   uniform float uDot;
   attribute vec2 aFrom;
   attribute vec2 aTo;
   attribute vec2 aLum;  // brightness at from / to
-  attribute vec3 aMeta; // kind (0 image, 1 text), size, random
+  attribute vec2 aMeta; // size, random
   varying float vA;
 
   float hash(float n) { return fract(sin(n) * 43758.5453); }
 
   // What the dot forms floats gently; the dot floats with it.
-  vec2 afloat(vec2 p, float kind) {
-    if (kind > 0.5) return p + uFloatT;
+  vec2 afloat(vec2 p) {
     vec2 d = p - uCard;
     float c = cos(uFloatI.z), s = sin(uFloatI.z);
     return uCard + vec2(d.x * c - d.y * s, d.x * s + d.y * c) + uFloatI.xy;
@@ -65,8 +63,7 @@ const vertex = /* glsl */ `
   }
 
   void main() {
-    float kind = aMeta.x;
-    float rnd = aMeta.z;
+    float rnd = aMeta.y;
     float h2 = hash(rnd * 3.7 + 1.0);
     float h3 = hash(rnd * 11.3 + 2.0);
     float w = clamp(uFly * 1.4 - h3 * 0.4, 0.0, 1.0);
@@ -75,8 +72,8 @@ const vertex = /* glsl */ `
     float a = uMode > 1.5 ? w : uMode > 0.5 ? 1.0 : clamp(w * 2.0, 0.0, 1.0);
     float b = uMode > 1.5 ? 0.0 : uMode > 0.5 ? w : clamp(w * 2.0 - 1.0, 0.0, 1.0);
 
-    vec2 from = afloat(aFrom, kind);
-    vec2 to = afloat(aTo, kind);
+    vec2 from = afloat(aFrom);
+    vec2 to = afloat(aTo);
     vec2 p;
     float flight;
     if (a < 1.0) {
@@ -93,9 +90,9 @@ const vertex = /* glsl */ `
     p += vec2(sin(uTime * 1.3 + rnd * 40.0), cos(uTime * 1.1 + rnd * 31.0)) * 0.5;
 
     float lum = max(a < 1.0 ? aLum.x : aLum.y, 0.7 * flight);
-    float tw = aMeta.y > 1.15 ? 0.6 + 0.4 * sin(uTime * (1.5 + rnd * 2.5) + rnd * 60.0) : 1.0;
+    float tw = aMeta.x > 1.15 ? 0.6 + 0.4 * sin(uTime * (1.5 + rnd * 2.5) + rnd * 60.0) : 1.0;
     gl_Position = vec4(p.x / uView.x * 2.0 - 1.0, 1.0 - p.y / uView.y * 2.0, 0.0, 1.0);
-    gl_PointSize = uDot * aMeta.y * uDpr * 2.6;
+    gl_PointSize = uDot * aMeta.x * uDpr * 2.6;
     vA = lum * tw * uAlpha;
   }
 `
@@ -109,8 +106,6 @@ type Props = {
   stageRef: RefObject<HTMLDivElement | null>
   /** The box the project images sit in (not transformed). */
   cardRef: RefObject<HTMLDivElement | null>
-  /** One text panel per project. */
-  panelRefs: RefObject<(HTMLDivElement | null)[]>
   /** One per project: 0 hidden → 1 shown. Set here. */
   opacities: MotionValue<number>[]
   /** The floating of the image (x, y, rotation in degrees) and of the text (x, y). Set here. */
@@ -120,7 +115,7 @@ type Props = {
   reduce: boolean
 }
 
-export function DotProjects({ sectionRef, stageRef, cardRef, panelRefs, opacities, float, perProject, reduce }: Props) {
+export function DotProjects({ sectionRef, stageRef, cardRef, opacities, float, perProject, reduce }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -149,7 +144,6 @@ export function DotProjects({ sectionRef, stageRef, cardRef, panelRefs, opacitie
       uAlpha: { value: 0 },
       uCard: { value: new THREE.Vector2() },
       uFloatI: { value: new THREE.Vector3() },
-      uFloatT: { value: new THREE.Vector2() },
       uDot: { value: 2.4 },
       uColor: { value: DOT_COLOR },
     }
@@ -169,7 +163,6 @@ export function DotProjects({ sectionRef, stageRef, cardRef, panelRefs, opacitie
     }
 
     let nImg = 0
-    let nTxt = 0
     /** Per project, then two extra sets: where the dots come from (index N) and go to (N + 1). */
     let places: { pos: Float32Array; lum: Float32Array }[] = []
     let shown = -99 // the transition currently loaded into the buffers
@@ -189,9 +182,9 @@ export function DotProjects({ sectionRef, stageRef, cardRef, panelRefs, opacitie
       const cx = c.left - o.left
       const cy = c.top - o.top
       uniforms.uCard.value.set(cx + c.width / 2, cy + c.height / 2)
-      const n = nImg + nTxt
+      const n = nImg
       const rand = seeded(53)
-      places = PROJECTS.map((_, k) => {
+      places = PROJECTS.map(() => {
         const pos = new Float32Array(n * 2)
         const lum = new Float32Array(n)
         // Image: an even cloud over the card, a little denser toward the middle, soft at the edges.
@@ -202,20 +195,6 @@ export function DotProjects({ sectionRef, stageRef, cardRef, panelRefs, opacitie
           pos[i * 2] = cx + (x * 1.04 - 0.02) * c.width
           pos[i * 2 + 1] = cy + (y * 1.04 - 0.02) * c.height
           lum[i] = 0.25 + rand() * 0.6
-        }
-        const panel = panelRefs.current[k]
-        const slot = panel?.parentElement?.parentElement // the untransformed text slot
-        if (panel && slot) {
-          const sr = slot.getBoundingClientRect()
-          const boxes = textBoxes(panel)
-          if (!boxes.length) boxes.push({ x: 0, y: 0, w: panel.offsetWidth, h: panel.offsetHeight })
-          for (let i = nImg; i < n; i++) {
-            const b = boxes[(rand() * boxes.length) | 0]
-            // Every panel starts at the slot's top-left corner (they share one grid cell).
-            pos[i * 2] = sr.left - o.left + b.x + rand() * b.w
-            pos[i * 2 + 1] = sr.top - o.top + b.y + rand() * b.h
-            lum[i] = 0.5 + rand() * 0.5
-          }
         }
         return { pos, lum }
       })
@@ -232,14 +211,14 @@ export function DotProjects({ sectionRef, stageRef, cardRef, panelRefs, opacitie
       places.push(off(0.35, 0.42, 30), off(0.5, 0.2, vh * 0.25))
 
       const geo = new THREE.BufferGeometry()
-      const meta = new Float32Array(n * 3)
+      const meta = new Float32Array(n * 2)
       const mr = seeded(71)
-      for (let i = 0; i < n; i++) meta.set([i < nImg ? 0 : 1, mr() < 0.05 ? 1.2 + mr() * 0.5 : 0.55 + mr() * 0.4, mr()], i * 3)
+      for (let i = 0; i < n; i++) meta.set([mr() < 0.05 ? 1.2 + mr() * 0.5 : 0.55 + mr() * 0.4, mr()], i * 2)
       geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3))
       geo.setAttribute('aFrom', new THREE.BufferAttribute(new Float32Array(n * 2), 2))
       geo.setAttribute('aTo', new THREE.BufferAttribute(new Float32Array(n * 2), 2))
       geo.setAttribute('aLum', new THREE.BufferAttribute(new Float32Array(n * 2), 2))
-      geo.setAttribute('aMeta', new THREE.BufferAttribute(meta, 3))
+      geo.setAttribute('aMeta', new THREE.BufferAttribute(meta, 2))
       gl.points.geometry.dispose()
       gl.points.geometry = geo
       shown = -99
@@ -268,7 +247,6 @@ export function DotProjects({ sectionRef, stageRef, cardRef, panelRefs, opacitie
     if (gl) {
       const wide = window.innerWidth >= 1024
       nImg = wide ? 5200 : 2600
-      nTxt = wide ? 1400 : 800
       layout()
     }
     let layoutT = 0
@@ -327,7 +305,6 @@ export function DotProjects({ sectionRef, stageRef, cardRef, panelRefs, opacitie
         uniforms.uMode.value = k <= 0 ? 1 : k >= N ? 2 : 0
         uniforms.uAlpha.value = alpha
         uniforms.uFloatI.value.set(float.cx.get(), float.cy.get(), (float.cr.get() * Math.PI) / 180)
-        uniforms.uFloatT.value.set(float.tx.get(), float.ty.get())
         gl.renderer.render(gl.scene, gl.camera)
       }
       raf = requestAnimationFrame(frame)
@@ -367,7 +344,7 @@ export function DotProjects({ sectionRef, stageRef, cardRef, panelRefs, opacitie
         gl.renderer.dispose()
       }
     }
-  }, [sectionRef, stageRef, cardRef, panelRefs, opacities, float, perProject, reduce])
+  }, [sectionRef, stageRef, cardRef, opacities, float, perProject, reduce])
 
   if (reduce) return null
   return <canvas ref={canvasRef} aria-hidden className="pointer-events-none absolute inset-0 z-10 size-full" />
