@@ -10,8 +10,8 @@ import { DotTransit } from './dot-transit'
  * A quiet pause between the astronaut and the projects: a narrow column of text with a lot of
  * room around it (after shaahid.in), where some phrases step back in grey.
  *
- * The text is brought in by the dots (dot-transit.tsx): they fly over from the astronaut, gather,
- * expand onto the text's lines, and the text appears as they fade (`reveal`). With reduced motion
+ * The text is brought in by the dots (dot-transit.tsx): they fly over from the astronaut straight
+ * onto the text's lines, and the text appears as they fade (`reveal`). With reduced motion
  * the text is simply there.
  */
 export function Statement() {
