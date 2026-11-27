@@ -1,0 +1,76 @@
+# Handoff — portfolio motion redesign (updated 2026-11-26, evening)
+
+Current state: **Option D** (dot astronaut) on `claude/motion-redesign` (draft PR stayh1gh/bruno-portfolio#1),
+also saved as the snapshot branch `claude/portfolio-option-d`.
+Everything is committed and pushed. Never merge to `main` without Bruno.
+
+## Where things are
+
+| What | Where |
+| --- | --- |
+| Working branch | `claude/motion-redesign` → draft PR #1 |
+| Snapshot: before the astronaut ("Option A") | branch `claude/portfolio-option-a` (`a086d89`) |
+| Snapshot: first astronaut version ("Option B") | branch `claude/portfolio-option-b` (`12455aa`) |
+| Snapshot: illustrated astronaut + astronaut avatar + simple timeline ("Option C") | branch `claude/portfolio-option-c` (`629275a`) |
+| Snapshot: dot astronaut on a grainy background ("Option D", current) | branch `claude/portfolio-option-d` |
+| App | `app/` (React 19 + Vite + Tailwind v4 + Motion + Lenis + three.js) |
+| Design | Figma "Bruno — Portfolio 2026" (`Pzut3K1Rp04QZwguSdJLUK`), Direction B, cards at node `9:297` |
+| Local worktree (Bruno's Mac) | `personal/portfolio-worktrees/motion-redesign`; the root portfolio checkout is on another branch with uncommitted work, don't touch it |
+
+Run it:
+
+```bash
+cd app
+npm install
+npm run dev -- --port 4185
+```
+
+## What the page is now (Option D)
+
+1. **Intro (story)** — `src/components/story.tsx`, copy in `src/data.ts` (`STORY`).
+   - Text: one paragraph, pure white `#FFFFFF`, sans only; bold on "Bruno Paradas", "design, build, and ship", "Buzzfeed". Typed at an even pace (23 letters/s, no pauses, no caret), starting shortly after the dots begin to arrive. Left on desktop (max 54% width), centred on phones. Pinned for 150svh; scrolling fast-forwards the typing. Scroll hint: a floating mouse icon only.
+   - **Dot astronaut** — `src/components/dot-astronaut.tsx` (three.js Points + shader, one draw call, screen-pixel space):
+     - Intro: the dots sweep in from off-screen left as one dense, bright ray of sand in a single long S-curve (it dips, then rises toward the helmet; thin at head and tail), after a ribbon-wave image Bruno shared; then the ribbon opens up into the figure (~3.8s). No loading ring any more.
+     - Dots are scattered at random inside `public/images/story/astronaut-body.webp` (1304×2311, transparent). Most sit on the drawing's contours (edge detection on its line work, shadow edges and silhouette), which read as bright dotted lines like the reference; a dim fill lies between them (`FILL` / `EDGE`), densest on the helmet (`SPOTS` / `detailWeight`). `SPACING` (4.9px) sets the overall amount. Most dots tiny, ~6% bigger ones that twinkle.
+     - Visor: the face in the drawing is masked out (`VISOR` outline, source px) → dark glass with a bright rim, a few dim dots and one soft reflection. Bruno asked for no face in the helmet.
+     - Gloomy low-key light, baked per dot: lit from the upper left, right/under sides in shadow, legs fading into the dark; a slow shadow drifts across the figure (shader).
+     - Glow: premultiplied additive blending (soft core + small halo). Colour `#dbe6f7` (cold blue-white).
+     - Fake depth (distance from the silhouette edge): gentle turn toward the cursor + idle sway, soft perspective.
+     - Hover: the dots drift away from the cursor and drift back (added back at Bruno's request). No cursor light/glow.
+     - On scroll out of the intro: the figure rises, turns and its dots fly off to the right (they return in the statement section).
+   - Earlier experiments Bruno rejected: a sparse "silhouette only" version, an empty visor, and a version with a filled plain visor. He preferred the stipple that follows the illustration, now with variable density.
+1b. **Statement** — `src/components/statement.tsx`, copy in `src/data.ts` (`STATEMENT`, **placeholder text**, `quiet` phrases shown in grey). A breathing pause between the astronaut and the projects, after shaahid.in: a narrow centred column, lots of room, small outline "Get in touch" button.
+   - **Dots bring the text in** — `src/components/dot-transit.tsx` (fixed full-screen canvas): after leaving the astronaut to the right, the dots come back in from the right as one ray and fly straight onto the text's lines in reading order (one box per character, measured from the real layout), and the text fades in as the dots fade (`reveal` motion value). No stop on the way: an orb they gathered into midway was removed at Bruno's request. All tied to where the text block is on screen; reverses on scroll up. Reduced motion: text is just there. An earlier version with dot drawings on either side (`dot-build.tsx`, commit `e35004a`) was removed at Bruno's request.
+2. **Background** — `src/components/space-backdrop.tsx`: plain cold blue-black `#06080c` (Bruno asked for blacker and cold colours) behind the whole page, with a fixed, still SVG film grain (fine cold specks at 6.5% opacity; Bruno found 12% too strong and didn't want it moving). The space painting and comets were removed (and `galaxy.tsx` deleted).
+   - **Dot space** — `src/components/dot-space.tsx`, a fixed full-screen WebGL canvas behind the whole page (mounted in `SpaceBackdrop`), in the same dots as the astronaut but dimmer: stars (wrap around, so they never run out), a spiral galaxy (upper left of the intro) and a small planet (upper right); after the intro only the stars continue (a second galaxy and planet further down were removed at Bruno's request). Scroll parallax (stars 6–26%, objects 35%), held still while the Featured Work stage (`#work`) is pinned so only that section's dots move, cursor parallax, galaxies turn, planets spin and are lit from the upper left, stars twinkle. Positions in `place()`; seeded random so rebuilds keep dots in place. A ringed planet at the intro's lower left was removed (Bruno didn't like it). Shared dot colour/shader in `src/components/dots.ts`.
+3. **Work** — `src/components/work.tsx` + `src/components/dot-projects.tsx`, "Featured Work": a pinned stage (section is `(6 × 0.9 + 1) × 100svh` tall) showing one project at a time. Centred title (72px on desktop) with a count, no filter. Image on the left (near the centre, 16:10), text on the right (index, headline 34px, hairline rows Client / Focus, "View project" or "Case study coming soon"); below `lg` the text sits under the image. Both float gently (x/y drift, slight rotation on the image).
+   - **Carried by dots**: scrolling steps through the projects. A ray of dots comes in from the left and expands into a plain cloud over the image (even scatter); the real image fades in as the dots fade, and the text simply fades in (no dots over it, Bruno's call); hold; then the project fades back into the cloud, which closes into a ray and flies off to the right while the next ray comes in. First project: only the ray in; after the last: only the ray out. The dots deliberately do not draw the picture (an edge-sampled version, commit `ad8676d`, was dropped: Bruno found the plain cloud cleaner). Timing constants in `T`, scroll per project in `PER_PROJECT`. `dot-projects.tsx` runs the whole sequence and sets each project's opacity and the floating; with reduced motion (or no WebGL) the projects just crossfade. All six projects are stacked in the same two slots so the dots can measure them.
+4. **Footer** — astronaut avatar with Bruno's moustache and goatee (`public/images/avatar.webp`), floating; "Want to build something? **Let's talk**". Credit line "Space illustrations: Magnific".
+5. **Overlays** — About and Other work, white sans. About's timeline: a straight line with a glowing point that travels down as you scroll.
+6. **Global** — custom cursor (frosted-glass ring that sits exactly on the pointer: no spring on its position, which used to trail by ~60ms and read as lag; "View"/"Soon" disc on cards); Lenis smooth scroll; container up to 2200px with 96px side padding on desktop.
+7. **Music** — `src/lib/music.ts`: quiet loop (8% volume, starts at 0:23) from the first click; volume icon button bottom-left.
+
+Reference for the dot look: motionsites.ai `?prompt=dot-portrait` (preview video
+`https://pub-86dc5b5484314368ac5436a674b0d919.r2.dev/aaaf/noa-made-of-dots.mp4`).
+
+## Not in git (on purpose)
+
+- `app/public/audio/background.mp3` — "Dearly Beloved" (Kingdom Hearts II), copyrighted, gitignored. Without it the music is silent. Replace with a licensed/royalty-free track at the same path before going live.
+
+## Images (Magnific, free plan)
+
+- Astronaut: stock "Anime style character in space" (id 122494274) → full-body version generated; background removed locally.
+- Avatar (Option C onward): the astronaut character with a moustache and goatee, generated from the astronaut stock image only.
+- Magnific MCP works in this account (Free plan: 20 images/day, no credits; 3D needs credits, so the dot astronaut uses fake depth).
+
+## Ideas not done yet
+
+- Real 3D for the dot astronaut (Magnific image-to-3D, 580–1,190 credits per run) → sample its surface with `MeshSurfaceSampler`.
+- Phone check of the dot astronaut + grain background.
+
+## Open items
+
+- Real copy for card one-liners and job summaries; videos for the cards.
+- "Other work" filter list: Figma says "Mobile", site says "Interaction" (kept on purpose for now).
+- Vercel build setup before this can replace the live static site.
+- Long story copy (`STORY_LONG`) is saved for the About overlay, not used yet.
