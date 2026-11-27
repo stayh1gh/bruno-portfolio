@@ -15,11 +15,11 @@ const PER_PROJECT = 0.9
 /**
  * Featured work: a pinned stage that shows one project at a time, image on the left (near the
  * centre) and its text on the right, both floating gently as if weightless. Scrolling steps
- * through the projects; each one is formed by dots, and vanishes into dots that fly off and come
- * back as the next (dot-projects.tsx runs that sequence and sets `opacities` and `float`).
+ * through the projects; each one arrives as a ray of dots that expands into a cloud and reveals
+ * it, and leaves as a cloud that closes into a ray and flies off while the next ray comes in (dot-projects.tsx runs that sequence and sets `opacities` and `float`).
  *
  * All projects are laid out on top of each other in the same two slots, so the dots can measure
- * where every image and line of text will be.
+ * where the image and every line of text will be.
  */
 export function Work() {
   const reduce = !!useReducedMotion()
@@ -41,7 +41,7 @@ export function Work() {
             whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.7, ease: [0.2, 0.7, 0.2, 1] }}
-            className="relative text-[38px] font-medium leading-none tracking-[-0.035em] text-white md:text-[48px]"
+            className="relative text-[44px] font-medium leading-none tracking-[-0.04em] text-white md:text-[72px]"
           >
             Featured Work
             <sup className="absolute -right-9 top-0 font-mono text-[11px] font-normal tracking-normal text-muted">({pad(PROJECTS.length)})</sup>
@@ -50,7 +50,7 @@ export function Work() {
 
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-8 lg:flex-row lg:gap-14">
           {/* Image slot */}
-          <div ref={cardRef} className="relative aspect-[16/10] w-full max-w-[34rem] shrink-0 lg:w-[min(52vw,47.5rem,calc((100svh-19rem)*1.6))] lg:max-w-none">
+          <div ref={cardRef} className="relative aspect-[16/10] w-full max-w-[34rem] shrink-0 lg:w-[min(52vw,47.5rem,calc((100svh-21rem)*1.6))] lg:max-w-none">
             <motion.div className="size-full" style={{ x: float.cx, y: float.cy, rotate: float.cr }}>
               {PROJECTS.map((p, i) => (
                 <ProjectCard key={p.slug} project={p} opacity={opacities[i]} />

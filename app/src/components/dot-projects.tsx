@@ -1,46 +1,43 @@
 import { useEffect, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import type { MotionValue } from 'motion/react'
-import { PROJECTS, type Media } from '@/data'
+import { PROJECTS } from '@/data'
 import { DOT_BLENDING, DOT_COLOR, DOT_FRAGMENT, seeded, textBoxes } from './dots'
 
 /**
- * Featured work, made of dots. The section is pinned; scrolling steps through the projects, one
- * at a time. For each step the same cloud of dots:
+ * Featured work, carried by dots. The section is pinned; scrolling steps through the projects,
+ * one at a time. For each step the same cloud of dots:
  *
- *   forms the project (its image as a dotted drawing, its text as dotted lines) → the real image
- *   and text fade in over the dots → hold → the project fades back to dots → the dots swirl away
- *   and come back as the next project.
+ *   comes in as a ray from the left and expands into a soft cloud over where the project goes
+ *   (an even scatter over the image, dotted lines over the text) → the real image and text fade
+ *   in as the dots fade → hold → the project fades back into the cloud → the cloud closes into a
+ *   ray that flies off to the right, while the next ray comes in.
  *
- * The first project's dots fly in from the right; after the last one they fly off.
+ * The first project only has the ray coming in; after the last one there is only the ray leaving.
+ * The dots do not draw the picture: they are just a cloud, so the project itself stays clean.
  *
  * This component runs the whole sequence from the scroll position: it draws the dots, and sets
  * each project's opacity (`opacities`) and the gentle floating of the image and text (`float`),
- * which the dots follow so they stay glued to what they form. With reduced motion it only sets
+ * which the dots follow so they stay glued to what they cover. With reduced motion it only sets
  * the opacities (a plain crossfade), draws nothing and nothing floats.
- *
- * Dot places: the image is sampled once per project (edges of the picture, so UI lines and type
- * show up as dotted contours); the text uses the real layout, one box per character.
  */
 
 /** How the scroll maps to a project, in "project units" (`v` = distance from project k's slot). */
 const T = {
-  outFrom: -0.28, // previous project starts turning into dots
-  outTo: -0.22,
-  flyFrom: -0.2, // dots leave, swirl, arrive
+  outFrom: -0.38, // previous project starts turning into dots
+  outTo: -0.32,
+  flyFrom: -0.3, // one ray leaves, another arrives
   flyTo: 0.04,
   inFrom: 0.03, // the new project fades in over the dots
   inTo: 0.12,
 }
-
-const SAMPLE_W = 320
-const SAMPLE_H = 200 // 16:10, like the card
 
 const vertex = /* glsl */ `
   uniform vec2 uView;
   uniform float uDpr;
   uniform float uTime;
   uniform float uFly;
+  uniform float uMode;
   uniform float uAlpha;
   uniform vec2 uCard;   // card centre
   uniform vec3 uFloatI; // image: x, y, rotation (radians)
@@ -62,127 +59,46 @@ const vertex = /* glsl */ `
     return uCard + vec2(d.x * c - d.y * s, d.x * s + d.y * c) + uFloatI.xy;
   }
 
+  // The ray the dots travel in: a long, slow wave.
+  float ray(float x, float y0, float rnd, float h2, float h3) {
+    return y0 + sin(x / uView.x * 5.5 + 0.4 - uTime * 0.3) * uView.y * 0.06 + (rnd + h2 + h3 - 1.5) * 9.0;
+  }
+
   void main() {
     float kind = aMeta.x;
     float rnd = aMeta.z;
     float h2 = hash(rnd * 3.7 + 1.0);
-    float w = clamp(uFly * 1.4 - rnd * 0.4, 0.0, 1.0);
-    float e = w * w * (3.0 - 2.0 * w);
-    float away = sin(3.14159 * w); // 0 in place, 1 furthest out
+    float h3 = hash(rnd * 11.3 + 2.0);
+    float w = clamp(uFly * 1.4 - h3 * 0.4, 0.0, 1.0);
+    // First half: leave in a ray off to the right. Second half: a ray comes in from the left.
+    // uMode 1 = only the way in (first project), 2 = only the way out (after the last).
+    float a = uMode > 1.5 ? w : uMode > 0.5 ? 1.0 : clamp(w * 2.0, 0.0, 1.0);
+    float b = uMode > 1.5 ? 0.0 : uMode > 0.5 ? w : clamp(w * 2.0 - 1.0, 0.0, 1.0);
 
-    vec2 p = mix(afloat(aFrom, kind), afloat(aTo, kind), e);
-    // Vanish: each dot swirls out on its own arc while the whole cloud drifts off and comes back.
-    float ang = rnd * 6.2831 + w * 2.6;
-    p += vec2(cos(ang), sin(ang)) * away * (50.0 + h2 * uView.x * 0.14);
-    p += vec2(uView.x * 0.12, -uView.y * 0.07) * away;
+    vec2 from = afloat(aFrom, kind);
+    vec2 to = afloat(aTo, kind);
+    vec2 p;
+    float flight;
+    if (a < 1.0) {
+      p.x = mix(from.x, uView.x + 60.0 + h2 * uView.x * 0.25, a * a);
+      float close = smoothstep(0.0, 0.5, a); // the dots close into the ray, then ride it out
+      p.y = mix(from.y, ray(p.x, uCard.y - uView.y * 0.1, rnd, h2, h3), close);
+      flight = close;
+    } else {
+      p.x = mix(-60.0 - h2 * uView.x * 0.25, to.x, 1.0 - pow(1.0 - b, 1.8));
+      float open = smoothstep(0.45, 1.0, b); // ...and open out of the ray onto their places
+      p.y = mix(ray(p.x, uCard.y + uView.y * 0.08, rnd, h2, h3), to.y, open);
+      flight = 1.0 - open;
+    }
     p += vec2(sin(uTime * 1.3 + rnd * 40.0), cos(uTime * 1.1 + rnd * 31.0)) * 0.5;
 
-    float lum = max(mix(aLum.x, aLum.y, e), 0.55 * away);
+    float lum = max(a < 1.0 ? aLum.x : aLum.y, 0.7 * flight);
     float tw = aMeta.y > 1.15 ? 0.6 + 0.4 * sin(uTime * (1.5 + rnd * 2.5) + rnd * 60.0) : 1.0;
     gl_Position = vec4(p.x / uView.x * 2.0 - 1.0, 1.0 - p.y / uView.y * 2.0, 0.0, 1.0);
     gl_PointSize = uDot * aMeta.y * uDpr * 2.6;
     vA = lum * tw * uAlpha;
   }
 `
-
-function loadImage(src: string) {
-  return new Promise<HTMLImageElement | null>((resolve) => {
-    const img = new Image()
-    img.decoding = 'async'
-    img.onload = () => resolve(img)
-    img.onerror = () => resolve(null)
-    img.src = src
-  })
-}
-
-/** A stand-in drawing for the Chomp card (it is a live component, not a picture): its four steps. */
-function drawChomp(ctx: CanvasRenderingContext2D) {
-  ctx.fillStyle = '#000'
-  ctx.fillRect(0, 0, SAMPLE_W, SAMPLE_H)
-  ctx.strokeStyle = '#fff'
-  ctx.lineWidth = 1.5
-  const y = SAMPLE_H * 0.46
-  const w = 46
-  const gap = 20
-  const x0 = (SAMPLE_W - (w * 4 + gap * 3)) / 2
-  for (let i = 0; i < 4; i++) {
-    const x = x0 + i * (w + gap)
-    ctx.beginPath()
-    ctx.roundRect(x, y - 9, w, 18, 9)
-    ctx.stroke()
-    ctx.fillStyle = '#fff'
-    ctx.fillRect(x + 10, y - 1.5, w - 20, 3)
-    if (i < 3) {
-      ctx.beginPath()
-      ctx.moveTo(x + w + 3, y)
-      ctx.lineTo(x + w + gap - 3, y)
-      ctx.stroke()
-    }
-  }
-  ctx.fillRect(SAMPLE_W / 2 - 34, y + 26, 68, 2.5)
-}
-
-/** Sample a project's picture into dots: normalised places (0–1 across the card) and brightness. */
-async function sampleMedia(media: Media, count: number, rand: () => number) {
-  const cv = document.createElement('canvas')
-  cv.width = SAMPLE_W
-  cv.height = SAMPLE_H
-  const ctx = cv.getContext('2d', { willReadFrequently: true })!
-  if (media.kind === 'chomp') drawChomp(ctx)
-  else {
-    const img = await loadImage(media.kind === 'video' ? media.poster : media.src)
-    ctx.fillStyle = (media.kind === 'image' && media.bg) || '#0b0c12'
-    ctx.fillRect(0, 0, SAMPLE_W, SAMPLE_H)
-    if (img) {
-      // Same crop as the card: object-fit cover, with the card's object-position.
-      const s = Math.max(SAMPLE_W / img.naturalWidth, SAMPLE_H / img.naturalHeight)
-      const dw = img.naturalWidth * s
-      const dh = img.naturalHeight * s
-      const top = media.kind === 'image' && media.position?.includes('top')
-      ctx.drawImage(img, (SAMPLE_W - dw) / 2, top ? 0 : (SAMPLE_H - dh) / 2, dw, dh)
-    }
-  }
-  const px = ctx.getImageData(0, 0, SAMPLE_W, SAMPLE_H).data
-  const n = SAMPLE_W * SAMPLE_H
-  const lumMap = new Float32Array(n)
-  for (let i = 0; i < n; i++) lumMap[i] = (0.2126 * px[i * 4] + 0.7152 * px[i * 4 + 1] + 0.0722 * px[i * 4 + 2]) / 255
-  // Edges: where the picture changes (UI lines, type, shapes).
-  const edge = new Float32Array(n)
-  for (let y = 1; y < SAMPLE_H - 1; y++)
-    for (let x = 1; x < SAMPLE_W - 1; x++) {
-      const i = y * SAMPLE_W + x
-      const w = SAMPLE_W
-      const gx = lumMap[i - w + 1] + 2 * lumMap[i + 1] + lumMap[i + w + 1] - lumMap[i - w - 1] - 2 * lumMap[i - 1] - lumMap[i + w - 1]
-      const gy = lumMap[i + w - 1] + 2 * lumMap[i + w] + lumMap[i + w + 1] - lumMap[i - w - 1] - 2 * lumMap[i - w] - lumMap[i - w + 1]
-      const t = Math.min(1, Math.max(0, (Math.hypot(gx, gy) - 0.12) / 0.9))
-      edge[i] = t * t * (3 - 2 * t)
-    }
-  const pos = new Float32Array(count * 2)
-  const lum = new Float32Array(count)
-  let k = 0
-  let tries = 0
-  while (k < count && tries < count * 200) {
-    tries++
-    let x = rand()
-    let y = rand()
-    let l: number
-    if (rand() < 0.07) {
-      // The card's own outline.
-      if (rand() < 0.5) y = rand() < 0.5 ? 0.004 : 0.996
-      else x = rand() < 0.5 ? 0.003 : 0.997
-      l = 0.7
-    } else {
-      const e = edge[Math.min(SAMPLE_H - 1, (y * SAMPLE_H) | 0) * SAMPLE_W + Math.min(SAMPLE_W - 1, (x * SAMPLE_W) | 0)]
-      if (rand() > 0.05 + e) continue
-      l = 0.22 + 0.78 * e
-    }
-    pos[k * 2] = x
-    pos[k * 2 + 1] = y
-    lum[k] = Math.min(1, l * (0.8 + rand() * 0.4))
-    k++
-  }
-  return { pos, lum }
-}
 
 type Float = { cx: MotionValue<number>; cy: MotionValue<number>; cr: MotionValue<number>; tx: MotionValue<number>; ty: MotionValue<number> }
 
@@ -229,6 +145,7 @@ export function DotProjects({ sectionRef, stageRef, cardRef, panelRefs, opacitie
       uDpr: { value: 1 },
       uTime: { value: 0 },
       uFly: { value: 0 },
+      uMode: { value: 0 },
       uAlpha: { value: 0 },
       uCard: { value: new THREE.Vector2() },
       uFloatI: { value: new THREE.Vector3() },
@@ -251,16 +168,14 @@ export function DotProjects({ sectionRef, stageRef, cardRef, panelRefs, opacitie
       }
     }
 
-    let disposed = false
     let nImg = 0
     let nTxt = 0
-    let samples: { pos: Float32Array; lum: Float32Array }[] | null = null
     /** Per project, then two extra sets: where the dots come from (index N) and go to (N + 1). */
     let places: { pos: Float32Array; lum: Float32Array }[] = []
     let shown = -99 // the transition currently loaded into the buffers
 
     const layout = () => {
-      if (!gl || !samples) return
+      if (!gl) return
       const vw = stage.clientWidth
       const vh = stage.clientHeight
       const dpr = Math.min(2, window.devicePixelRatio || 1)
@@ -279,11 +194,14 @@ export function DotProjects({ sectionRef, stageRef, cardRef, panelRefs, opacitie
       places = PROJECTS.map((_, k) => {
         const pos = new Float32Array(n * 2)
         const lum = new Float32Array(n)
-        const s = samples![k]
+        // Image: an even cloud over the card, a little denser toward the middle, soft at the edges.
         for (let i = 0; i < nImg; i++) {
-          pos[i * 2] = cx + s.pos[i * 2] * c.width
-          pos[i * 2 + 1] = cy + s.pos[i * 2 + 1] * c.height
-          lum[i] = s.lum[i]
+          const soft = rand() < 0.3
+          const x = soft ? (rand() + rand()) / 2 : rand()
+          const y = soft ? (rand() + rand()) / 2 : rand()
+          pos[i * 2] = cx + (x * 1.04 - 0.02) * c.width
+          pos[i * 2 + 1] = cy + (y * 1.04 - 0.02) * c.height
+          lum[i] = 0.25 + rand() * 0.6
         }
         const panel = panelRefs.current[k]
         const slot = panel?.parentElement?.parentElement // the untransformed text slot
@@ -301,7 +219,7 @@ export function DotProjects({ sectionRef, stageRef, cardRef, panelRefs, opacitie
         }
         return { pos, lum }
       })
-      // In: a ray from off-screen right. Out: off to the upper right.
+      // Stand-ins for "no project" before the first and after the last (the rays ignore them).
       const off = (dx: number, y0: number, spread: number) => {
         const pos = new Float32Array(n * 2)
         const lum = new Float32Array(n).fill(0.75)
@@ -349,14 +267,9 @@ export function DotProjects({ sectionRef, stageRef, cardRef, panelRefs, opacitie
 
     if (gl) {
       const wide = window.innerWidth >= 1024
-      nImg = wide ? 7000 : 3600
+      nImg = wide ? 5200 : 2600
       nTxt = wide ? 1400 : 800
-      const rand = seeded(97)
-      Promise.all(PROJECTS.map((p) => sampleMedia(p.media, nImg, rand))).then((s) => {
-        if (disposed) return
-        samples = s
-        layout()
-      })
+      layout()
     }
     let layoutT = 0
     const relayout = () => {
@@ -386,7 +299,7 @@ export function DotProjects({ sectionRef, stageRef, cardRef, panelRefs, opacitie
       const k = Math.floor(u - T.outFrom)
       const v = u - k
 
-      // Without dots (reduced motion, no WebGL, pictures not sampled yet) the projects just crossfade.
+      // Without dots (reduced motion, no WebGL) the projects just crossfade.
       const dots = !!gl && places.length > 0
       for (let j = 0; j < N; j++) {
         let o = 0
@@ -411,6 +324,7 @@ export function DotProjects({ sectionRef, stageRef, cardRef, panelRefs, opacitie
         const alpha = inRange ? (k === 0 ? ramp(v, T.flyFrom - 0.04, T.flyFrom + 0.02) : ramp(v, T.outFrom, T.outTo)) * (1 - (k === N ? ramp(v, T.flyTo - 0.1, T.flyTo) : ramp(v, T.inFrom + 0.02, T.inTo))) : 0
         uniforms.uTime.value = time
         uniforms.uFly.value = ramp(v, T.flyFrom, T.flyTo)
+        uniforms.uMode.value = k <= 0 ? 1 : k >= N ? 2 : 0
         uniforms.uAlpha.value = alpha
         uniforms.uFloatI.value.set(float.cx.get(), float.cy.get(), (float.cr.get() * Math.PI) / 180)
         uniforms.uFloatT.value.set(float.tx.get(), float.ty.get())
@@ -442,7 +356,6 @@ export function DotProjects({ sectionRef, stageRef, cardRef, panelRefs, opacitie
     document.addEventListener('visibilitychange', onVis)
 
     return () => {
-      disposed = true
       stop()
       io.disconnect()
       ro.disconnect()
